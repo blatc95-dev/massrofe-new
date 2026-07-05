@@ -169,14 +169,26 @@
   }
   .receipt-empty{color:var(--text-3); font-size:13.5px; text-align:center; padding:40px 10px;}
   .r-row{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dashed var(--line);}
+  .r-row.r-group{cursor:pointer;}
+  .r-row.r-group:active{background:var(--bg-raised);}
   .r-row .ic{font-size:18px; width:22px; text-align:center;}
   .r-info{flex:1; min-width:0;}
-  .r-cat{font-size:13.5px; color:var(--text-1); font-weight:500;}
+  .r-cat{font-size:13.5px; color:var(--text-1); font-weight:500; display:flex; align-items:center; gap:6px;}
+  .r-count{font-size:10px; color:var(--text-3); font-weight:400; background:var(--bg-raised); border:1px solid var(--line); border-radius:20px; padding:1px 6px;}
   .r-time{font-size:10.5px; color:var(--text-3); margin-top:1px;}
   .r-amt{font-size:14.5px; font-weight:700;}
   .r-amt.expense{color:var(--expense);}
   .r-amt.topup{color:var(--topup);}
   .r-del{color:var(--text-3); font-size:15px; padding:4px 6px; cursor:pointer;}
+
+  /* category detail sheet */
+  .cd-row{padding:11px 2px; border-bottom:1px dashed var(--line); display:flex; flex-direction:column; gap:5px;}
+  .cd-row:last-child{border-bottom:none;}
+  .cd-top{display:flex; align-items:center; justify-content:space-between;}
+  .cd-amt{font-size:14.5px; font-weight:700;}
+  .cd-dates{font-size:11.5px; color:var(--text-3);}
+  .cd-del{color:var(--text-3); font-size:15px; padding:2px 6px; cursor:pointer;}
+  .cd-total{display:flex; justify-content:space-between; padding:10px 2px 4px; margin-bottom:6px; border-bottom:1px solid var(--line); font-size:13px; color:var(--text-2);}
 
   /* categories breakdown */
   .cat-list{flex:1; overflow-y:auto;}
@@ -357,6 +369,16 @@
   </div>
 </div>
 
+<!-- CATEGORY DETAIL SHEET -->
+<div class="overlay" id="catDetailOverlay">
+  <div class="sheet">
+    <h3 id="catDetailTitle">الفئة</h3>
+    <div class="cd-total" id="catDetailTotal"></div>
+    <div id="catDetailList"></div>
+    <div class="close-sheet" id="closeCatDetail">إغلاق</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -392,6 +414,7 @@
   let carryEnabled = true;
   let carryAmount = 0;
   let selectedNewCatIcon = ICON_PALETTE[0];
+  let activeDetailCatId = null;
 
   function getAllCategories(){
     const hidden = DB.hiddenDefaults || [];
@@ -433,6 +456,35 @@
   function fmtNum(n){
     n = Math.round(n*100)/100;
     return n.toLocaleString('en-US', {maximumFractionDigits:2});
+  }
+
+  // ---------- Hijri / Gregorian / time formatting ----------
+  function formatHijri(d){
+    try{
+      return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {day:'numeric', month:'long', year:'numeric'}).format(d);
+    }catch(e){
+      try{
+        return new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {day:'numeric', month:'long', year:'numeric'}).format(d);
+      }catch(e2){
+        return '';
+      }
+    }
+  }
+
+  function formatGregorian(d){
+    try{
+      return new Intl.DateTimeFormat('ar-SA-u-ca-gregory', {day:'numeric', month:'long', year:'numeric'}).format(d);
+    }catch(e){
+      return d.toLocaleDateString('ar-SA');
+    }
+  }
+
+  function formatTimeOnly(d){
+    try{
+      return new Intl.DateTimeFormat('ar-SA', {hour:'2-digit', minute:'2-digit', hour12:true}).format(d);
+    }catch(e){
+      return d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+    }
   }
 
   function toast(msg){
@@ -524,6 +576,8 @@
     updateCatGridState();
   }
 
+  // Groups expense transactions by category into a single row each; top-ups stay as
+  // individual rows. Rows are ordered by the most recent transaction in each group.
   function renderHistory(){
     const data = ensureCycle(currentCycle.key);
     const wrap = document.getElementById('receiptWrap');
@@ -531,26 +585,114 @@
       wrap.innerHTML = '<div class="receipt-empty">لا توجد عمليات بعد هذا الشهر</div>';
       return;
     }
-    const sorted = [...data.transactions].sort((a,b)=> b.ts - a.ts);
     const allCats = getAllCategories();
-    wrap.innerHTML = sorted.map(t=>{
-      const cat = allCats.find(c=>c.id===t.category);
-      const icon = t.type==='topup' ? '💰' : (cat ? cat.icon : '❔');
-      const label = t.type==='topup' ? 'إضافة للميزانية' : (cat ? cat.label : 'غير مصنف');
-      const sign = t.type==='topup' ? '+' : '-';
-      const cls = t.type==='topup' ? 'topup' : 'expense';
-      const time = new Date(t.ts).toLocaleString('ar-SA', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
-      return `<div class="r-row" data-id="${t.id}">
-        <span class="ic">${icon}</span>
-        <div class="r-info"><div class="r-cat">${label}</div><div class="r-time">${time}</div></div>
-        <span class="r-amt ${cls} mono">${sign}${fmtNum(t.amount)}</span>
-        <span class="r-del" data-del="${t.id}">✕</span>
-      </div>`;
+
+    const groups = {}; // catId -> {total, count, lastTs}
+    const topups = [];
+
+    data.transactions.forEach(t=>{
+      if(t.type === 'expense'){
+        if(!groups[t.category]) groups[t.category] = {total:0, count:0, lastTs:0};
+        const g = groups[t.category];
+        g.total += t.amount;
+        g.count += 1;
+        if(t.ts > g.lastTs) g.lastTs = t.ts;
+      } else {
+        topups.push(t);
+      }
+    });
+
+    const rows = [];
+    Object.keys(groups).forEach(catId=>{
+      const g = groups[catId];
+      rows.push({ kind:'expense-group', catId, total:g.total, count:g.count, ts:g.lastTs });
+    });
+    topups.forEach(t=> rows.push({ kind:'topup', tx:t, ts:t.ts }));
+
+    rows.sort((a,b)=> b.ts - a.ts);
+
+    wrap.innerHTML = rows.map(r=>{
+      if(r.kind === 'topup'){
+        const t = r.tx;
+        const time = new Date(t.ts).toLocaleString('ar-SA', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
+        return `<div class="r-row" data-id="${t.id}">
+          <span class="ic">💰</span>
+          <div class="r-info"><div class="r-cat">إضافة للميزانية</div><div class="r-time">${time}</div></div>
+          <span class="r-amt topup mono">+${fmtNum(t.amount)}</span>
+          <span class="r-del" data-del="${t.id}">✕</span>
+        </div>`;
+      } else {
+        const cat = allCats.find(c=>c.id===r.catId);
+        const icon = cat ? cat.icon : '❔';
+        const label = cat ? cat.label : 'غير مصنف';
+        const countBadge = r.count > 1 ? `<span class="r-count">×${r.count}</span>` : '';
+        const subLabel = r.count > 1 ? (r.count + ' عمليات') : 'عملية واحدة';
+        return `<div class="r-row r-group" data-catid="${r.catId}">
+          <span class="ic">${icon}</span>
+          <div class="r-info"><div class="r-cat">${label} ${countBadge}</div><div class="r-time">${subLabel}</div></div>
+          <span class="r-amt expense mono">-${fmtNum(r.total)}</span>
+          <span class="r-del">›</span>
+        </div>`;
+      }
     }).join('');
+
+    wrap.querySelectorAll('.r-group').forEach(row=>{
+      row.addEventListener('click', ()=> openCategoryDetail(row.dataset.catid));
+    });
     wrap.querySelectorAll('[data-del]').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
         e.stopPropagation();
         deleteTransaction(btn.dataset.del);
+      });
+    });
+  }
+
+  // Shows every individual transaction for a category with Hijri date, Gregorian date and time.
+  function openCategoryDetail(catId){
+    activeDetailCatId = catId;
+    const data = ensureCycle(currentCycle.key);
+    const cat = getAllCategories().find(c=>c.id===catId);
+    const label = cat ? (cat.icon + ' ' + cat.label) : 'غير مصنف';
+    document.getElementById('catDetailTitle').textContent = label;
+
+    const txs = data.transactions
+      .filter(t=> t.type === 'expense' && t.category === catId)
+      .sort((a,b)=> b.ts - a.ts);
+
+    const total = txs.reduce((s,t)=>s+t.amount, 0);
+    document.getElementById('catDetailTotal').innerHTML =
+      `<span>${txs.length} عملية</span><span class="mono">${fmtNum(total)} ر.س</span>`;
+
+    renderCatDetailList(txs);
+    document.getElementById('catDetailOverlay').classList.add('show');
+  }
+
+  function renderCatDetailList(txs){
+    const list = document.getElementById('catDetailList');
+    if(txs.length === 0){
+      list.innerHTML = '<div class="receipt-empty">لا توجد عمليات</div>';
+      return;
+    }
+    list.innerHTML = txs.map(t=>{
+      const d = new Date(t.ts);
+      const hijri = formatHijri(d);
+      const greg = formatGregorian(d);
+      const time = formatTimeOnly(d);
+      return `<div class="cd-row" data-id="${t.id}">
+        <div class="cd-top">
+          <span class="cd-amt expense mono">-${fmtNum(t.amount)} ر.س</span>
+          <span class="cd-del" data-cddel="${t.id}">✕</span>
+        </div>
+        <div class="cd-dates">${greg}${hijri ? ' — ' + hijri + ' هـ' : ''} • ${time}</div>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('[data-cddel]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        deleteTransaction(btn.dataset.cddel);
+        if(activeDetailCatId){
+          openCategoryDetail(activeDetailCatId);
+        }
       });
     });
   }
@@ -882,6 +1024,11 @@
       document.getElementById('newCatLabel').value = '';
     });
     document.getElementById('btnRestoreDefaults').addEventListener('click', restoreDefaultCategories);
+
+    document.getElementById('closeCatDetail').addEventListener('click', ()=>{
+      document.getElementById('catDetailOverlay').classList.remove('show');
+      activeDetailCatId = null;
+    });
 
     document.getElementById('btnSettings').addEventListener('click', ()=>{
       populatePastMonths();
