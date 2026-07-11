@@ -365,6 +365,9 @@
       <span>عرض شهر سابق</span>
       <select id="pastMonthSelect"><option value="">اختر الشهر</option></select>
     </div>
+    <div class="row" id="rowExportBackup" style="cursor:pointer;"><span>تنزيل نسخة احتياطية</span><span>⭳</span></div>
+    <div class="row" id="rowImportBackup" style="cursor:pointer;"><span>استيراد نسخة احتياطية</span><span>⭱</span></div>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none;">
     <div class="row" id="rowDanger" style="cursor:pointer;"><span style="color:var(--expense);">مسح جميع البيانات</span><span style="color:var(--expense);">›</span></div>
     <div class="close-sheet" id="closeSettings">إغلاق</div>
   </div>
@@ -1022,6 +1025,61 @@
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.screen===name));
   }
 
+  // ---------- backup / restore (localStorage is tied to this exact page/origin,
+  // so if the file is ever moved, renamed, re-added to the home screen, or re-hosted,
+  // the browser may treat it as a new, empty storage. Exporting a JSON backup lets
+  // the person restore their data regardless of where/how the file is opened next.) ----------
+  function exportBackup(){
+    try{
+      const stamp = dateKey(new Date());
+      const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'مصروفي-نسخة-احتياطية-' + stamp + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 2000);
+      toast('تم تنزيل النسخة الاحتياطية');
+    }catch(e){
+      toast('تعذر إنشاء النسخة الاحتياطية');
+    }
+  }
+
+  function importBackupFromFile(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e)=>{
+      let parsed;
+      try{
+        parsed = JSON.parse(e.target.result);
+      }catch(err){
+        toast('ملف غير صالح');
+        return;
+      }
+      if(!parsed || typeof parsed !== 'object' || !parsed.cycles){
+        toast('ملف غير صالح');
+        return;
+      }
+      if(!confirm('سيتم استبدال جميع البيانات الحالية بالنسخة المستوردة. متابعة؟')) return;
+      DB = parsed;
+      if(!DB.cycles) DB.cycles = {};
+      if(!DB.customCategories) DB.customCategories = [];
+      if(!DB.settings) DB.settings = { theme:'dark' };
+      if(!DB.hiddenDefaults) DB.hiddenDefaults = [];
+      await saveData();
+      applyTheme();
+      currentCycle = getCycleForDate(new Date());
+      ensureCycle(currentCycle.key);
+      renderCatGrid();
+      renderAll();
+      document.getElementById('settingsOverlay').classList.remove('show');
+      toast('تم استيراد البيانات بنجاح');
+    };
+    reader.readAsText(file);
+  }
+
   function populatePastMonths(){
     const sel = document.getElementById('pastMonthSelect');
     sel.innerHTML = '<option value="">اختر الشهر</option>';
@@ -1094,6 +1152,15 @@
     document.getElementById('rowEditBudget').addEventListener('click', ()=>{
       document.getElementById('settingsOverlay').classList.remove('show');
       openBudgetOverlay('edit');
+    });
+    document.getElementById('rowExportBackup').addEventListener('click', exportBackup);
+    document.getElementById('rowImportBackup').addEventListener('click', ()=>{
+      document.getElementById('importFileInput').click();
+    });
+    document.getElementById('importFileInput').addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      importBackupFromFile(file);
+      e.target.value = '';
     });
     document.getElementById('rowDanger').addEventListener('click', async ()=>{
       if(confirm('سيتم حذف جميع البيانات المحفوظة نهائيًا. متابعة؟')){
