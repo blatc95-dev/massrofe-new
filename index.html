@@ -7,6 +7,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0B1220">
 <title>المصروف — دفتر الميزانية</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="المصروف">
+<meta name="application-name" content="المصروف">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -64,7 +70,7 @@
     min-height:100vh;
     display:flex;
     flex-direction:column;
-    padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 14px);
+    padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 84px);
     position:relative;
   }
   .mono{font-family:'Space Mono', monospace; direction:ltr; unicode-bidi:isolate;}
@@ -114,13 +120,19 @@
   .rate-item-value.neg{color:var(--expense);}
   .rate-divider{width:1px; background:var(--line); margin:2px 10px;}
 
-  /* tabs */
-  .tabs{display:flex; gap:6px; margin-bottom:12px; background:var(--bg-panel-2); padding:4px; border-radius:12px; border:1px solid var(--line);}
-  .tab{flex:1; text-align:center; padding:9px 4px; font-size:13.5px; color:var(--text-2); border-radius:9px; cursor:pointer; user-select:none;}
-  .tab.active{background:var(--bg-raised); color:var(--text-1); font-weight:700;}
+  /* view-past banner */
+  .view-banner{
+    background:var(--bg-raised); border:1px solid var(--gold-dim); border-radius:var(--radius-md);
+    padding:9px 12px; margin-bottom:10px; display:none; align-items:center; justify-content:space-between;
+    font-size:12.5px; color:var(--gold);
+  }
+  .view-banner.show{display:flex;}
+  .view-banner .bk{cursor:pointer; text-decoration:underline; flex:0 0 auto; margin-inline-start:10px;}
 
-  .screen{display:none; flex:1; flex-direction:column;}
+  .screen{display:none; flex:1; flex-direction:column; min-height:0;}
   .screen.active{display:flex;}
+  .screen-scroll{flex:1; overflow-y:auto; min-height:0;}
+  .screen-title{font-size:15px; font-weight:700; margin:2px 2px 12px; display:flex; align-items:center; gap:7px;}
 
   /* input row */
   .amount-row{
@@ -145,6 +157,7 @@
   .key.func{color:var(--text-2); font-size:17px;}
 
   .cats-title{font-size:12.5px; color:var(--text-2); margin:2px 2px 8px;}
+  .cats-hint{font-size:13px; color:var(--text-3); text-align:center; padding:22px 10px 8px; line-height:1.5;}
   .cat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
   .cat-btn{
     background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
@@ -196,14 +209,61 @@
   .cd-del{color:var(--text-3); font-size:15px; padding:2px 6px; cursor:pointer;}
   .cd-total{display:flex; justify-content:space-between; padding:10px 2px 4px; margin-bottom:6px; border-bottom:1px solid var(--line); font-size:13px; color:var(--text-2);}
 
-  /* categories breakdown */
-  .cat-list{flex:1; overflow-y:auto;}
+  /* ===== savings / commitments / financial ===== */
+  .sec-card{background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%); border:1px solid var(--line); border-radius:var(--radius-lg); padding:18px; margin-bottom:12px;}
+  .sec-h{font-size:12.5px; color:var(--text-2); margin-bottom:4px;}
+  .big-num{font-size:34px; font-weight:700; color:var(--topup); line-height:1.25;}
+  .big-num.neg{color:var(--expense);}
+  .big-num.gold{color:var(--gold);}
+  .mini-actions{display:flex; gap:8px; margin-top:14px;}
+  .mini-actions .btn{padding:11px 6px; font-size:13px;}
+
+  .entry-row{display:flex; align-items:center; gap:10px; padding:11px 2px; border-bottom:1px dashed var(--line);}
+  .entry-row:last-child{border-bottom:none;}
+  .entry-info{flex:1; min-width:0;}
+  .entry-note{font-size:13.5px; color:var(--text-1);}
+  .entry-date{font-size:10.5px; color:var(--text-3); margin-top:2px;}
+  .entry-amt{font-size:14.5px; font-weight:700;}
+  .entry-amt.pos{color:var(--topup);}
+  .entry-amt.neg{color:var(--expense);}
+  .entry-del{color:var(--text-3); font-size:14px; padding:4px 6px; cursor:pointer;}
+
+  .commit-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-md); padding:14px; margin-bottom:10px; cursor:pointer;}
+  .commit-card:active{background:var(--bg-panel-2);}
+  .commit-top{display:flex; align-items:center; gap:9px; margin-bottom:9px;}
+  .commit-top .ic{font-size:20px;}
+  .commit-name{flex:1; font-weight:700; font-size:14.5px;}
+  .commit-pct{font-size:12px; color:var(--gold); font-weight:700;}
+  .commit-figs{display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-2); margin:8px 0 6px;}
+  .commit-figs b{color:var(--text-1); font-weight:700;}
+  .commit-pay-btn{margin-top:10px;}
+
+  .rating-wrap{text-align:center; padding:6px 0 2px;}
+  .rating-badge{display:inline-block; padding:8px 20px; border-radius:22px; font-weight:900; font-size:19px; border:1px solid var(--line);}
+  .rating-note{font-size:12.5px; color:var(--text-2); margin-top:10px; line-height:1.5;}
+  .fin-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+  .fin-cell{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-md); padding:13px;}
+  .fin-cell .lbl{font-size:11px; color:var(--text-2); margin-bottom:5px; line-height:1.3;}
+  .fin-cell .num{font-size:17px; font-weight:700; color:var(--text-1);}
+  .fin-cell .num.pos{color:var(--topup);}
+  .fin-cell .num.neg{color:var(--expense);}
+
+  /* categories breakdown (used inside financial) */
   .cl-row{margin-bottom:12px;}
   .cl-top{display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;}
   .cl-top .name{display:flex; align-items:center; gap:7px; color:var(--text-1);}
   .cl-top .val{color:var(--text-2);}
   .cl-track{height:7px; border-radius:5px; background:#0E1727; overflow:hidden; border:1px solid var(--line);}
   .cl-fill{height:100%; border-radius:5px;}
+
+  .bill-row{display:flex; align-items:center; justify-content:space-between; padding:11px 2px; border-bottom:1px dashed var(--line);}
+  .bill-row:last-child{border-bottom:none;}
+  .bill-name{font-size:13.5px; color:var(--text-1);}
+  .bill-vals{display:flex; flex-direction:column; align-items:flex-start; gap:2px;}
+  .bill-month{font-size:14.5px; font-weight:700; color:var(--text-1);}
+  .bill-sub{font-size:10.5px; color:var(--text-3);}
+
+  .empty-note{color:var(--text-3); font-size:13.5px; text-align:center; padding:34px 10px;}
 
   /* overlay */
   .overlay{
@@ -223,8 +283,15 @@
   .sheet select{background:var(--bg-panel-2); color:var(--text-1); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font-family:'Tajawal',sans-serif; font-size:13px;}
   .close-sheet{text-align:center; padding:6px 0 4px; color:var(--text-3); font-size:13px; margin-top:4px;}
 
+  .fld-l{display:block; font-size:12px; color:var(--text-2); margin:6px 2px 6px;}
+  .field{
+    width:100%; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:9px;
+    color:var(--text-1); font-family:'Tajawal',sans-serif; font-size:15px; padding:12px; margin-bottom:10px;
+  }
+  .field::placeholder{color:var(--text-3);}
+
   .toast{
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    position:fixed; bottom:94px; left:50%; transform:translateX(-50%);
     background:var(--bg-raised); border:1px solid var(--line); color:var(--text-1);
     padding:10px 18px; border-radius:30px; font-size:13px; z-index:80; opacity:0;
     transition:opacity .25s, transform .25s; pointer-events:none;
@@ -248,6 +315,8 @@
   .cm-row .ic{font-size:18px; width:24px; text-align:center;}
   .cm-row .lb{flex:1; font-size:13.5px;}
   .cm-row .tag{font-size:10.5px; color:var(--text-3);}
+  .cm-bill{font-size:10.5px; padding:4px 9px; border-radius:20px; border:1px solid var(--line); color:var(--text-3); cursor:pointer; flex:0 0 auto; white-space:nowrap;}
+  .cm-bill.on{color:var(--gold); border-color:var(--gold-dim); background:rgba(212,168,87,.10);}
   .cm-del{color:var(--expense); font-size:15px; padding:4px 8px; cursor:pointer;}
   .cm-form{display:flex; gap:8px; margin-top:12px;}
   .cm-form input{
@@ -263,6 +332,23 @@
   }
   .icon-pick.sel{ background:var(--bg-raised); border-color:var(--gold); }
   .cm-restore{text-align:center; font-size:12.5px; color:var(--text-2); padding:8px 0 0; cursor:pointer; text-decoration:underline;}
+
+  /* bottom navigation */
+  .bottomnav{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:430px; display:flex; z-index:45;
+    background:var(--bg-panel); border-top:1px solid var(--line);
+    padding:6px 6px calc(env(safe-area-inset-bottom) + 6px);
+    gap:2px;
+  }
+  .navbtn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 2px; border-radius:12px; cursor:pointer; color:var(--text-3); user-select:none;
+  }
+  .navbtn .nic{font-size:19px; line-height:1;}
+  .navbtn .nlb{font-size:10px;}
+  .navbtn.active{color:var(--gold); background:var(--bg-panel-2);}
+  .navbtn:active{transform:scale(.94);}
 </style>
 </head>
 <body>
@@ -287,19 +373,18 @@
       </div>
       <div class="rate-divider"></div>
       <div class="rate-item">
-        <div class="rate-item-label">المتاح يوميًا<br>(بناء على الميزانية المتبقية)</div>
+        <div class="rate-item-label">المتاح يوميًا<br>(تقديري على ٣٠ يوم)</div>
         <div class="rate-item-value mono" id="avgAvailablePerDay">٠ ر.س</div>
       </div>
     </div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" data-screen="calc">الحاسبة</div>
-    <div class="tab" data-screen="history">السجل</div>
-    <div class="tab" data-screen="cats">الفئات</div>
+  <div class="view-banner" id="viewBanner">
+    <span id="viewBannerText">تعرض شهرًا سابقًا</span>
+    <span class="bk" id="viewBannerBack">العودة للشهر الحالي</span>
   </div>
 
-  <!-- CALC SCREEN -->
+  <!-- HOME (calculator) SCREEN -->
   <div class="screen active" id="screen-calc">
     <div class="amount-row">
       <span class="amt placeholder" id="amtDisplay">أدخل المبلغ</span>
@@ -311,8 +396,9 @@
       <div class="key" data-k="1">١</div><div class="key" data-k="2">٢</div><div class="key" data-k="3">٣</div>
       <div class="key func" data-k=".">٫</div><div class="key" data-k="0">٠</div><div class="key func" data-k="back">⌫</div>
     </div>
-    <div class="cats-title">اختر الفئة لخصم المبلغ منها</div>
-    <div class="cat-grid" id="catGrid"></div>
+    <div class="cats-hint" id="catsHint">أدخل المبلغ بالأعلى ثم اختر الفئة لخصمه منها</div>
+    <div class="cats-title" id="catsTitle" style="display:none;">اختر الفئة لخصم المبلغ منها</div>
+    <div class="cat-grid" id="catGrid" style="display:none;"></div>
   </div>
 
   <!-- HISTORY SCREEN -->
@@ -322,14 +408,74 @@
     </div>
   </div>
 
-  <!-- CATEGORIES SCREEN -->
-  <div class="screen" id="screen-cats">
-    <div class="cat-list" id="catList"></div>
+  <!-- SAVINGS SCREEN -->
+  <div class="screen" id="screen-savings">
+    <div class="screen-scroll">
+      <div class="sec-card">
+        <div class="sec-h">إجمالي المدخرات الحالية</div>
+        <div class="big-num mono" id="savTotal">٠ ر.س</div>
+        <div class="mini-actions">
+          <div class="btn positive" id="btnSavDeposit">+ إضافة ادخار</div>
+          <div class="btn" id="btnSavWithdraw">− سحب</div>
+        </div>
+        <div class="mini-actions">
+          <div class="btn ghost" id="btnSavOpening">تعديل الرصيد الحالي</div>
+        </div>
+      </div>
+      <div class="screen-title">📜 حركات الإدخار</div>
+      <div id="savList"></div>
+    </div>
+  </div>
+
+  <!-- COMMITMENTS SCREEN -->
+  <div class="screen" id="screen-commitments">
+    <div class="screen-scroll">
+      <div class="screen-title" style="justify-content:space-between;">
+        <span>💳 الالتزامات</span>
+        <span class="btn primary" id="btnAddCommit" style="flex:0 0 auto; padding:8px 14px; font-size:13px;">+ التزام</span>
+      </div>
+      <div id="commitList"></div>
+    </div>
+  </div>
+
+  <!-- FINANCIAL STATUS SCREEN -->
+  <div class="screen" id="screen-financial">
+    <div class="screen-scroll">
+      <div class="sec-card">
+        <div class="sec-h" style="text-align:center;">التقييم العام لوضعك المالي</div>
+        <div class="rating-wrap">
+          <span class="rating-badge" id="finRatingBadge">—</span>
+          <div class="rating-note" id="finRatingNote"></div>
+        </div>
+      </div>
+      <div class="fin-grid" id="finGrid"></div>
+      <div class="sec-card" id="finBillsCard" style="display:none;">
+        <div class="sec-h" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>🧾 الفواتير الشهرية الثابتة</span>
+          <span id="finBillsTotal" class="mono" style="color:var(--gold); font-weight:700;"></span>
+        </div>
+        <div id="finBills" style="margin-top:12px;"></div>
+        <div id="finBillsHint" style="font-size:11px; color:var(--text-3); margin-top:8px; line-height:1.5;"></div>
+      </div>
+      <div class="sec-card" id="finBreakdownCard" style="display:none;">
+        <div class="sec-h">أعلى فئات الصرف هذا الشهر</div>
+        <div id="finBreakdown" style="margin-top:10px;"></div>
+      </div>
+    </div>
   </div>
 
 </div>
 
-<!-- ONBOARDING / BUDGET OVERLAY -->
+<!-- BOTTOM NAVIGATION -->
+<div class="bottomnav" id="bottomNav">
+  <div class="navbtn active" data-screen="calc"><span class="nic">🧮</span><span class="nlb">الرئيسية</span></div>
+  <div class="navbtn" data-screen="history"><span class="nic">🧾</span><span class="nlb">السجل</span></div>
+  <div class="navbtn" data-screen="savings"><span class="nic">💰</span><span class="nlb">الإدخار</span></div>
+  <div class="navbtn" data-screen="commitments"><span class="nic">💳</span><span class="nlb">الالتزامات</span></div>
+  <div class="navbtn" data-screen="financial"><span class="nic">📊</span><span class="nlb">الوضع المالي</span></div>
+</div>
+
+<!-- ONBOARDING / BUDGET / SALARY OVERLAY -->
 <div class="overlay" id="budgetOverlay">
   <div class="sheet">
     <h3 id="budgetSheetTitle">ابدأ ميزانية هذا الشهر</h3>
@@ -348,6 +494,7 @@
       <span id="carryLabel">المتبقي من الشهر الماضي: ٠ ر.س</span>
       <div class="switch on" id="carrySwitch"></div>
     </div>
+    <div class="close-sheet" id="closeBudget" style="display:none;">إغلاق</div>
   </div>
 </div>
 
@@ -359,14 +506,15 @@
       <span>الوضع الليلي</span>
       <div class="switch on" id="themeSwitch"></div>
     </div>
+    <div class="row" id="rowNewSalary" style="cursor:pointer;"><span>💵 استلام راتب جديد (بدء شهر جديد)</span><span>›</span></div>
     <div class="row" id="rowEditBudget" style="cursor:pointer;"><span>تعديل ميزانية الشهر الحالي</span><span>›</span></div>
     <div class="row" id="rowManageCats" style="cursor:pointer;"><span>إدارة الفئات</span><span>›</span></div>
     <div class="row">
       <span>عرض شهر سابق</span>
       <select id="pastMonthSelect"><option value="">اختر الشهر</option></select>
     </div>
-    <div class="row" id="rowExportBackup" style="cursor:pointer;"><span>تنزيل نسخة احتياطية</span><span>⭳</span></div>
-    <div class="row" id="rowImportBackup" style="cursor:pointer;"><span>استيراد نسخة احتياطية</span><span>⭱</span></div>
+    <div class="row" id="rowExportBackup" style="cursor:pointer;"><span>تنزيل نسخة احتياطية</span><span>↓</span></div>
+    <div class="row" id="rowImportBackup" style="cursor:pointer;"><span>استيراد نسخة احتياطية</span><span>↑</span></div>
     <input type="file" id="importFileInput" accept="application/json" style="display:none;">
     <div class="row" id="rowDanger" style="cursor:pointer;"><span style="color:var(--expense);">مسح جميع البيانات</span><span style="color:var(--expense);">›</span></div>
     <div class="close-sheet" id="closeSettings">إغلاق</div>
@@ -399,6 +547,59 @@
   </div>
 </div>
 
+<!-- SAVINGS SHEET -->
+<div class="overlay" id="savingsOverlay">
+  <div class="sheet">
+    <h3 id="savingsSheetTitle">إضافة ادخار</h3>
+    <label class="fld-l">المبلغ (ر.س)</label>
+    <input type="text" inputmode="decimal" id="savAmountInput" class="field" placeholder="0">
+    <label class="fld-l" id="savNoteLabel">ملاحظة (اختياري)</label>
+    <input type="text" id="savNoteInput" class="field" placeholder="مثال: ادخار شهر يوليو">
+    <div class="budget-actions">
+      <div class="btn primary" id="btnSavConfirm">حفظ</div>
+    </div>
+    <div class="close-sheet" id="closeSavings">إلغاء</div>
+  </div>
+</div>
+
+<!-- COMMITMENT ADD SHEET -->
+<div class="overlay" id="commitAddOverlay">
+  <div class="sheet">
+    <h3>إضافة التزام جديد</h3>
+    <label class="fld-l">اسم الالتزام</label>
+    <input type="text" id="commitNameInput" class="field" placeholder="مثال: قرض السيارة">
+    <div class="icon-pick-title" style="margin-top:0;">اختر أيقونة</div>
+    <div class="icon-pick-grid" id="commitIconGrid"></div>
+    <label class="fld-l">إجمالي المبلغ (ر.س)</label>
+    <input type="text" inputmode="decimal" id="commitTotalInput" class="field" placeholder="0">
+    <label class="fld-l">المدفوع سابقًا (اختياري)</label>
+    <input type="text" inputmode="decimal" id="commitPaidInput" class="field" placeholder="0">
+    <div class="budget-actions">
+      <div class="btn primary" id="btnCommitAddConfirm">إضافة الالتزام</div>
+    </div>
+    <div class="close-sheet" id="closeCommitAdd">إلغاء</div>
+  </div>
+</div>
+
+<!-- COMMITMENT DETAIL / PAYMENT SHEET -->
+<div class="overlay" id="commitDetailOverlay">
+  <div class="sheet">
+    <h3 id="commitDetailTitle">الالتزام</h3>
+    <div class="cd-total" id="commitDetailFigs"></div>
+    <label class="fld-l">تسجيل دفعة جديدة (ر.س) — ستُخصم من ميزانية الشهر</label>
+    <input type="text" inputmode="decimal" id="commitPayInput" class="field" placeholder="0">
+    <div class="budget-actions">
+      <div class="btn primary" id="btnCommitPayConfirm">تسجيل الدفعة</div>
+    </div>
+    <div class="screen-title" style="margin-top:16px;">سجل الدفعات</div>
+    <div id="commitPayList"></div>
+    <div class="budget-actions" style="margin-top:14px;">
+      <div class="btn danger" id="btnCommitDelete">حذف هذا الالتزام</div>
+    </div>
+    <div class="close-sheet" id="closeCommitDetail">إغلاق</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -419,26 +620,51 @@
     {id:'hospital', label:'مستشفى',             icon:'🏥', color:'#D66A5E'},
   ];
 
+  // Virtual category for commitment payments (shown in history/breakdown, not selectable).
+  const COMMIT_CAT = {id:'__commit', label:'الالتزامات', icon:'💳', color:'#C88A4A'};
+
   const AR_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   const STORE_KEY = 'expense-tracker-data';
 
   const CUSTOM_COLORS = ['#8FAF8A','#6FA8C9','#D98BA0','#C97B4A','#B08C6A','#C9A8D4','#9CB86B','#7C8CC4','#E3C567','#D66A5E'];
   const ICON_PALETTE = ['🏷️','🎁','💊','📚','🐾','✈️','🎓','🛠️','💇','🎮','🧴','☂️','🕌','🎉','📱','👗','🧾','⚽','🐕','🌙'];
+  const COMMIT_ICONS = ['💳','🚗','🏠','📱','🎓','🛋️','💍','🏥','✈️','🛠️','💼','🏦'];
 
-  let DB = { cycles: {}, customCategories: [], settings: { theme:'dark' }, hiddenDefaults: [] };
-  let currentCycle = null; // {start,end,key}
+  // categories treated as fixed monthly bills by default
+  const DEFAULT_BILLS = ['power','net','car'];
+
+  let DB = { cycles: {}, currentCycleKey:null, savings:{opening:0, entries:[]}, commitments:[], customCategories: [], settings: { theme:'dark' }, hiddenDefaults: [], billCategories: DEFAULT_BILLS.slice() };
+  let currentCycle = null; // {start,end,key}  (derived)
+  let viewCycleKey = null;  // when set, we render a past cycle read-only
   let expenseAmount = '';
   let budgetAmount = '';
-  let budgetMode = 'start'; // 'start' | 'edit'
+  let budgetMode = 'start'; // 'start' | 'newsalary' | 'edit'
   let activeScreen = 'calc';
   let carryEnabled = true;
   let carryAmount = 0;
   let selectedNewCatIcon = ICON_PALETTE[0];
+  let selectedCommitIcon = COMMIT_ICONS[0];
   let activeDetailCatId = null;
+  let savingsMode = 'deposit'; // 'deposit' | 'withdraw' | 'opening'
+  let activeCommitId = null;
 
   function getAllCategories(){
     const hidden = DB.hiddenDefaults || [];
     return CATEGORIES.filter(c=>!hidden.includes(c.id)).concat(DB.customCategories || []);
+  }
+  // includes the virtual commitment category (for display lookups only)
+  function findCategory(id){
+    if(id === COMMIT_CAT.id) return COMMIT_CAT;
+    return getAllCategories().find(c=>c.id===id) || null;
+  }
+  function isBill(id){ return (DB.billCategories||[]).includes(id); }
+  async function toggleBill(id){
+    DB.billCategories = DB.billCategories || [];
+    if(isBill(id)) DB.billCategories = DB.billCategories.filter(x=>x!==id);
+    else DB.billCategories.push(id);
+    await saveData();
+    renderCatManageList();
+    renderFinancial();
   }
 
   function applyTheme(){
@@ -460,22 +686,20 @@
   function dateKey(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
   function fmtShort(d){ return d.getDate()+' '+AR_MONTHS[d.getMonth()]; }
 
-  function getCycleForDate(d){
-    const day = d.getDate();
-    let start, end;
-    if(day >= 28){
-      start = new Date(d.getFullYear(), d.getMonth(), 28);
-      end   = new Date(d.getFullYear(), d.getMonth()+1, 27);
-    } else {
-      start = new Date(d.getFullYear(), d.getMonth()-1, 28);
-      end   = new Date(d.getFullYear(), d.getMonth(), 27);
-    }
-    return { start, end, key: dateKey(start) };
-  }
-
   function fmtNum(n){
     n = Math.round(n*100)/100;
     return n.toLocaleString('en-US', {maximumFractionDigits:2});
+  }
+
+  // normalise Arabic-Indic digits / decimal marks from free-text inputs
+  function normNum(s){
+    if(s==null) return '';
+    const map={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','٫':'.','،':''};
+    return (''+s).replace(/[٠-٩٫،]/g, ch => map[ch]!==undefined?map[ch]:ch).replace(/[^0-9.]/g,'');
+  }
+  function parseInput(id){
+    const el = document.getElementById(id);
+    return parseFloat(normNum(el ? el.value : '')) || 0;
   }
 
   // ---------- Hijri / Gregorian / time formatting ----------
@@ -514,7 +738,7 @@
     setTimeout(()=>t.classList.remove('show'), 1600);
   }
 
-  // ---------- storage (localStorage — works on any static host, incl. GitHub Pages) ----------
+  // ---------- storage ----------
   async function loadData(){
     try{
       const raw = localStorage.getItem(STORE_KEY);
@@ -522,13 +746,30 @@
         DB = JSON.parse(raw);
       }
     }catch(e){
-      // no data yet, or storage unavailable — keep default DB
       DB = { cycles: {} };
     }
     if(!DB.cycles) DB.cycles = {};
     if(!DB.customCategories) DB.customCategories = [];
     if(!DB.settings) DB.settings = { theme:'dark' };
     if(!DB.hiddenDefaults) DB.hiddenDefaults = [];
+    if(!DB.savings || typeof DB.savings !== 'object') DB.savings = {opening:0, entries:[]};
+    if(typeof DB.savings.opening !== 'number') DB.savings.opening = 0;
+    if(!Array.isArray(DB.savings.entries)) DB.savings.entries = [];
+    if(!Array.isArray(DB.commitments)) DB.commitments = [];
+    if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
+
+    // migrate: ensure each cycle has a startTs; pick current cycle if none set
+    Object.keys(DB.cycles).forEach(k=>{
+      const c = DB.cycles[k];
+      if(c && typeof c.startTs !== 'number'){
+        const d = new Date(k);
+        c.startTs = isNaN(d.getTime()) ? 0 : d.getTime();
+      }
+    });
+    if(!DB.currentCycleKey || !DB.cycles[DB.currentCycleKey]){
+      const ks = orderedKeys();
+      DB.currentCycleKey = ks.length ? ks[ks.length-1] : null;
+    }
   }
 
   async function saveData(){
@@ -541,19 +782,89 @@
 
   function ensureCycle(key){
     if(!DB.cycles[key]){
-      DB.cycles[key] = { budget:0, transactions:[] };
+      DB.cycles[key] = { budget:0, transactions:[], salary:0, carry:0, startTs: Date.now() };
     }
     return DB.cycles[key];
+  }
+
+  // ordered by chronological start
+  function orderedKeys(){
+    return Object.keys(DB.cycles).sort((a,b)=>(DB.cycles[a].startTs||0)-(DB.cycles[b].startTs||0));
+  }
+  function cycleEndForKey(key){
+    const ks = orderedKeys();
+    const i = ks.indexOf(key);
+    if(i>=0 && i < ks.length-1){
+      const nextStart = DB.cycles[ks[i+1]].startTs || 0;
+      return new Date(nextStart - 86400000);
+    }
+    return null; // ongoing
+  }
+  function buildCycle(key){
+    if(!key || !DB.cycles[key]) return null;
+    const c = DB.cycles[key];
+    const start = new Date(c.startTs || Date.parse(key) || Date.now());
+    return { key, start, end: cycleEndForKey(key) };
+  }
+  function getCurrentCycle(){ return buildCycle(DB.currentCycleKey); }
+
+  // the cycle currently being rendered (past view or current)
+  function activeKey(){ return viewCycleKey || DB.currentCycleKey; }
+  function activeCycle(){ return buildCycle(activeKey()); }
+
+  function cycleExpenseTotal(key){
+    const c = DB.cycles[key];
+    if(!c) return 0;
+    return c.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  }
+  function cycleLeftover(key){
+    const c = DB.cycles[key];
+    if(!c) return 0;
+    return c.budget - cycleExpenseTotal(key);
+  }
+
+  // ---------- savings / commitments helpers ----------
+  function savingsTotal(){
+    const s = DB.savings || {opening:0, entries:[]};
+    return (s.opening||0) + (s.entries||[]).reduce((a,e)=>a+(e.amount||0),0);
+  }
+  function commitPaid(c){
+    return (c.initialPaid||0) + (c.payments||[]).reduce((a,p)=>a+(p.amount||0),0);
+  }
+  function commitRemaining(c){
+    return Math.max(0, (c.total||0) - commitPaid(c));
   }
 
   // ---------- rendering ----------
   function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 
   function renderHeader(){
-    const c = currentCycle;
-    document.getElementById('cycleLabel').textContent = fmtShort(c.start) + '  —  ' + fmtShort(c.end);
+    const c = activeCycle();
+    const banner = document.getElementById('viewBanner');
+    if(!c){
+      document.getElementById('cycleLabel').textContent = '— — —';
+      document.getElementById('remainingVal').textContent = '٠ ر.س';
+      document.getElementById('remainingSub').textContent = 'من أصل ٠ ر.س';
+      document.getElementById('barFill').style.width = '0%';
+      document.getElementById('avgSpentPerDay').textContent = '٠ ر.س';
+      document.getElementById('avgAvailablePerDay').textContent = '٠ ر.س';
+      banner.classList.remove('show');
+      return;
+    }
+    // view-past banner
+    if(viewCycleKey){
+      banner.classList.add('show');
+      document.getElementById('viewBannerText').textContent =
+        'تعرض شهرًا سابقًا: ' + fmtShort(c.start) + (c.end ? ' — ' + fmtShort(c.end) : '');
+    } else {
+      banner.classList.remove('show');
+    }
+
+    document.getElementById('cycleLabel').textContent =
+      fmtShort(c.start) + '  —  ' + (c.end ? fmtShort(c.end) : 'الآن');
+
     const data = ensureCycle(c.key);
-    const spent = data.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const spent = cycleExpenseTotal(c.key);
     const remaining = data.budget - spent;
     const rv = document.getElementById('remainingVal');
     rv.textContent = fmtNum(remaining) + ' ر.س';
@@ -564,26 +875,27 @@
     bf.style.width = pct + '%';
     bf.classList.toggle('over', remaining < 0);
 
-    // rates: average daily spend so far, and average daily budget still available
+    // rates: average daily spend so far, and average daily budget available (projected 30-day month)
+    const PROJECTED_LEN = 30;
     const today = startOfDay(new Date());
     const cycleStart = startOfDay(c.start);
-    const cycleEnd = startOfDay(c.end);
-    const totalDays = Math.round((cycleEnd - cycleStart) / 86400000) + 1;
-    let daysPassed = Math.round((today - cycleStart) / 86400000) + 1;
-    daysPassed = Math.min(Math.max(daysPassed, 1), totalDays);
-    const daysRemaining = Math.max(totalDays - daysPassed + 1, 1);
+    const cycleEnd = c.end ? startOfDay(c.end) : null;
+    let daysPassed;
+    if(cycleEnd){
+      const totalDays = Math.round((cycleEnd - cycleStart)/86400000) + 1;
+      daysPassed = Math.min(Math.max(Math.round((today - cycleStart)/86400000)+1,1), totalDays);
+    } else {
+      daysPassed = Math.max(Math.round((today - cycleStart)/86400000)+1, 1);
+    }
+    const daysRemaining = Math.max(PROJECTED_LEN - daysPassed + 1, 1);
 
     const avgSpentPerDay = spent / daysPassed;
     const avgAvailablePerDay = remaining / daysRemaining;
 
-    const avgSpentEl = document.getElementById('avgSpentPerDay');
-    if(avgSpentEl) avgSpentEl.textContent = fmtNum(avgSpentPerDay) + ' ر.س';
-
+    document.getElementById('avgSpentPerDay').textContent = fmtNum(avgSpentPerDay) + ' ر.س';
     const avgAvailEl = document.getElementById('avgAvailablePerDay');
-    if(avgAvailEl){
-      avgAvailEl.textContent = fmtNum(avgAvailablePerDay) + ' ر.س';
-      avgAvailEl.classList.toggle('neg', avgAvailablePerDay < 0);
-    }
+    avgAvailEl.textContent = fmtNum(avgAvailablePerDay) + ' ر.س';
+    avgAvailEl.classList.toggle('neg', avgAvailablePerDay < 0);
   }
 
   function renderCatGrid(){
@@ -602,6 +914,13 @@
 
   function updateCatGridState(){
     const enabled = expenseAmount !== '' && parseFloat(expenseAmount) > 0;
+    // categories only appear once an amount has been entered
+    const grid = document.getElementById('catGrid');
+    const title = document.getElementById('catsTitle');
+    const hint = document.getElementById('catsHint');
+    if(grid) grid.style.display = enabled ? 'grid' : 'none';
+    if(title) title.style.display = enabled ? 'block' : 'none';
+    if(hint) hint.style.display = enabled ? 'none' : 'block';
     document.querySelectorAll('.cat-btn').forEach(el=>{
       el.classList.toggle('enabled', enabled);
     });
@@ -622,13 +941,14 @@
   // Groups expense transactions by category into a single row each; top-ups stay as
   // individual rows. Rows are ordered by the most recent transaction in each group.
   function renderHistory(){
-    const data = ensureCycle(currentCycle.key);
+    const c = activeCycle();
     const wrap = document.getElementById('receiptWrap');
+    if(!c){ wrap.innerHTML = '<div class="receipt-empty">لا توجد بيانات بعد</div>'; return; }
+    const data = ensureCycle(c.key);
     if(data.transactions.length === 0){
       wrap.innerHTML = '<div class="receipt-empty">لا توجد عمليات بعد هذا الشهر</div>';
       return;
     }
-    const allCats = getAllCategories();
 
     const groups = {}; // catId -> {total, count, lastTs}
     const topups = [];
@@ -665,7 +985,7 @@
           <span class="r-del" data-del="${t.id}">✕</span>
         </div>`;
       } else {
-        const cat = allCats.find(c=>c.id===r.catId);
+        const cat = findCategory(r.catId);
         const icon = cat ? cat.icon : '❔';
         const label = cat ? cat.label : 'غير مصنف';
         const countBadge = r.count > 1 ? `<span class="r-count">×${r.count}</span>` : '';
@@ -690,11 +1010,11 @@
     });
   }
 
-  // Shows every individual transaction for a category with Hijri date, Gregorian date and time.
   function openCategoryDetail(catId){
     activeDetailCatId = catId;
-    const data = ensureCycle(currentCycle.key);
-    const cat = getAllCategories().find(c=>c.id===catId);
+    const c = activeCycle();
+    const data = ensureCycle(c.key);
+    const cat = findCategory(catId);
     const label = cat ? (cat.icon + ' ' + cat.label) : 'غير مصنف';
     document.getElementById('catDetailTitle').textContent = label;
 
@@ -740,30 +1060,380 @@
     });
   }
 
-  function renderCatBreakdown(){
-    const data = ensureCycle(currentCycle.key);
-    const list = document.getElementById('catList');
-    const allCats = getAllCategories();
+  // ---------- savings screen ----------
+  function renderSavings(){
+    const total = savingsTotal();
+    const el = document.getElementById('savTotal');
+    el.textContent = fmtNum(total) + ' ر.س';
+    el.classList.toggle('neg', total < 0);
+
+    const list = document.getElementById('savList');
+    const entries = (DB.savings.entries || []).slice().sort((a,b)=>b.ts-a.ts);
+    if(entries.length === 0){
+      list.innerHTML = '<div class="empty-note">لا توجد حركات إدخار بعد. أضف أول عملية بالأعلى.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(e=>{
+      const d = new Date(e.ts);
+      const dateStr = formatGregorian(d) + ' • ' + formatTimeOnly(d);
+      const pos = e.amount >= 0;
+      const note = e.note ? e.note : (pos ? 'إضافة ادخار' : 'سحب');
+      return `<div class="entry-row">
+        <div class="entry-info">
+          <div class="entry-note">${note}</div>
+          <div class="entry-date">${dateStr}</div>
+        </div>
+        <span class="entry-amt ${pos?'pos':'neg'} mono">${pos?'+':'-'}${fmtNum(Math.abs(e.amount))}</span>
+        <span class="entry-del" data-savdel="${e.id}">✕</span>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-savdel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteSavingsEntry(btn.dataset.savdel));
+    });
+  }
+
+  function openSavingsSheet(mode){
+    savingsMode = mode;
+    const title = document.getElementById('savingsSheetTitle');
+    const noteLabel = document.getElementById('savNoteLabel');
+    const noteInput = document.getElementById('savNoteInput');
+    document.getElementById('savAmountInput').value = '';
+    noteInput.value = '';
+    if(mode === 'deposit'){ title.textContent = 'إضافة ادخار'; noteLabel.style.display='block'; noteInput.style.display='block'; }
+    else if(mode === 'withdraw'){ title.textContent = 'سحب من الإدخار'; noteLabel.style.display='block'; noteInput.style.display='block'; }
+    else { title.textContent = 'تعديل الرصيد الحالي للإدخار'; noteLabel.style.display='none'; noteInput.style.display='none'; }
+    document.getElementById('savingsOverlay').classList.add('show');
+  }
+
+  async function confirmSavings(){
+    const amt = parseInput('savAmountInput');
+    if(amt <= 0){ toast('أدخل مبلغًا صحيحًا'); return; }
+    const note = document.getElementById('savNoteInput').value.trim();
+    if(savingsMode === 'opening'){
+      DB.savings.opening = amt;
+      // treat as a fresh baseline; keep entries as history
+      toast('تم تعيين الرصيد الحالي');
+    } else {
+      const signed = savingsMode === 'withdraw' ? -amt : amt;
+      DB.savings.entries.push({ id:'s'+Date.now()+Math.random().toString(36).slice(2,6), amount:signed, note, ts:Date.now() });
+      toast(savingsMode === 'withdraw' ? 'تم تسجيل السحب' : 'تمت إضافة الادخار');
+    }
+    await saveData();
+    document.getElementById('savingsOverlay').classList.remove('show');
+    renderSavings();
+    renderFinancial();
+  }
+
+  async function deleteSavingsEntry(id){
+    if(!confirm('حذف هذه الحركة من سجل الإدخار؟')) return;
+    DB.savings.entries = (DB.savings.entries||[]).filter(e=>e.id!==id);
+    await saveData();
+    renderSavings();
+    renderFinancial();
+  }
+
+  // ---------- commitments screen ----------
+  function renderCommitments(){
+    const list = document.getElementById('commitList');
+    const items = DB.commitments || [];
+    if(items.length === 0){
+      list.innerHTML = '<div class="empty-note">لا توجد التزامات مسجلة. أضف التزامًا (مثل قرض السيارة) بالأعلى.</div>';
+      return;
+    }
+    list.innerHTML = items.map(c=>{
+      const paid = commitPaid(c);
+      const rem = commitRemaining(c);
+      const pct = c.total>0 ? Math.min(100, (paid/c.total)*100) : 0;
+      return `<div class="commit-card" data-commit="${c.id}">
+        <div class="commit-top">
+          <span class="ic">${c.icon||'💳'}</span>
+          <span class="commit-name">${c.name}</span>
+          <span class="commit-pct mono">${Math.round(pct)}%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="commit-figs">
+          <span>الإجمالي <b class="mono">${fmtNum(c.total)}</b></span>
+          <span>المدفوع <b class="mono">${fmtNum(paid)}</b></span>
+          <span>المتبقي <b class="mono">${fmtNum(rem)}</b></span>
+        </div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-commit]').forEach(el=>{
+      el.addEventListener('click', ()=> openCommitDetail(el.dataset.commit));
+    });
+  }
+
+  function renderCommitIconGrid(){
+    const grid = document.getElementById('commitIconGrid');
+    grid.innerHTML = COMMIT_ICONS.map(ic=>
+      `<div class="icon-pick${ic===selectedCommitIcon?' sel':''}" data-cicon="${ic}">${ic}</div>`
+    ).join('');
+    grid.querySelectorAll('.icon-pick').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        selectedCommitIcon = el.dataset.cicon;
+        grid.querySelectorAll('.icon-pick').forEach(x=>x.classList.remove('sel'));
+        el.classList.add('sel');
+      });
+    });
+  }
+
+  function openCommitAdd(){
+    selectedCommitIcon = COMMIT_ICONS[0];
+    document.getElementById('commitNameInput').value = '';
+    document.getElementById('commitTotalInput').value = '';
+    document.getElementById('commitPaidInput').value = '';
+    renderCommitIconGrid();
+    document.getElementById('commitAddOverlay').classList.add('show');
+  }
+
+  async function confirmCommitAdd(){
+    const name = document.getElementById('commitNameInput').value.trim();
+    const total = parseInput('commitTotalInput');
+    const paid = parseInput('commitPaidInput');
+    if(!name){ toast('اكتب اسم الالتزام'); return; }
+    if(total <= 0){ toast('أدخل الإجمالي'); return; }
+    DB.commitments.push({
+      id:'m'+Date.now()+Math.random().toString(36).slice(2,6),
+      name, icon:selectedCommitIcon, total, initialPaid:Math.min(paid,total), payments:[], createdTs:Date.now()
+    });
+    await saveData();
+    document.getElementById('commitAddOverlay').classList.remove('show');
+    renderCommitments();
+    renderFinancial();
+    toast('تمت إضافة الالتزام');
+  }
+
+  function openCommitDetail(id){
+    activeCommitId = id;
+    const c = (DB.commitments||[]).find(x=>x.id===id);
+    if(!c) return;
+    document.getElementById('commitDetailTitle').textContent = (c.icon||'💳') + ' ' + c.name;
+    const paid = commitPaid(c), rem = commitRemaining(c);
+    document.getElementById('commitDetailFigs').innerHTML =
+      `<span>الإجمالي ${fmtNum(c.total)} — المدفوع ${fmtNum(paid)}</span><span class="mono">المتبقي ${fmtNum(rem)} ر.س</span>`;
+    document.getElementById('commitPayInput').value = '';
+    renderCommitPayList(c);
+    document.getElementById('commitDetailOverlay').classList.add('show');
+  }
+
+  function renderCommitPayList(c){
+    const list = document.getElementById('commitPayList');
+    const pays = (c.payments||[]).slice().sort((a,b)=>b.ts-a.ts);
+    if(pays.length === 0){
+      list.innerHTML = '<div class="empty-note">لا توجد دفعات مسجلة بعد.</div>';
+      return;
+    }
+    list.innerHTML = pays.map(p=>{
+      const d = new Date(p.ts);
+      const dateStr = formatGregorian(d) + ' • ' + formatTimeOnly(d);
+      return `<div class="entry-row">
+        <div class="entry-info">
+          <div class="entry-note">دفعة</div>
+          <div class="entry-date">${dateStr}</div>
+        </div>
+        <span class="entry-amt neg mono">-${fmtNum(p.amount)}</span>
+        <span class="entry-del" data-paydel="${p.id}">✕</span>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-paydel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteCommitPayment(btn.dataset.paydel));
+    });
+  }
+
+  async function confirmCommitPay(){
+    const c = (DB.commitments||[]).find(x=>x.id===activeCommitId);
+    if(!c) return;
+    const amt = parseInput('commitPayInput');
+    if(amt <= 0){ toast('أدخل مبلغ الدفعة'); return; }
+    if(!DB.currentCycleKey || !DB.cycles[DB.currentCycleKey]){
+      toast('ابدأ شهرًا (راتبًا) أولًا لخصم الدفعة');
+      return;
+    }
+    const ts = Date.now();
+    const payId = 'p'+ts+Math.random().toString(36).slice(2,6);
+    c.payments = c.payments || [];
+    c.payments.push({ id:payId, amount:amt, ts });
+    // also deduct from the CURRENT month budget as an expense (linked to this payment)
+    const data = ensureCycle(DB.currentCycleKey);
+    data.transactions.push({
+      id:'t'+ts+Math.random().toString(36).slice(2,6),
+      type:'expense', amount:amt, category:COMMIT_CAT.id, commitmentId:c.id, payId, ts
+    });
+    await saveData();
+    renderAll();
+    openCommitDetail(c.id); // refresh detail
+    toast('تم تسجيل الدفعة وخصمها من الميزانية');
+  }
+
+  async function deleteCommitPayment(payId){
+    const c = (DB.commitments||[]).find(x=>x.id===activeCommitId);
+    if(!c) return;
+    if(!confirm('حذف هذه الدفعة؟ سيُعاد المبلغ إلى ميزانية الشهر المسجلة فيه.')) return;
+    c.payments = (c.payments||[]).filter(p=>p.id!==payId);
+    // remove the linked expense transaction from whichever cycle holds it
+    Object.keys(DB.cycles).forEach(k=>{
+      const cyc = DB.cycles[k];
+      cyc.transactions = cyc.transactions.filter(t=> t.payId !== payId);
+    });
+    await saveData();
+    renderAll();
+    openCommitDetail(c.id);
+    toast('تم حذف الدفعة');
+  }
+
+  async function deleteCommitment(){
+    const c = (DB.commitments||[]).find(x=>x.id===activeCommitId);
+    if(!c) return;
+    if(!confirm('حذف هذا الالتزام؟ الدفعات المسجلة في السجل الشهري تبقى كمصروفات.')) return;
+    DB.commitments = (DB.commitments||[]).filter(x=>x.id!==c.id);
+    await saveData();
+    document.getElementById('commitDetailOverlay').classList.remove('show');
+    activeCommitId = null;
+    renderCommitments();
+    renderFinancial();
+    toast('تم حذف الالتزام');
+  }
+
+  // ---------- financial status ----------
+  function avgMonthlyExpense(){
+    const keys = orderedKeys().filter(k=>cycleExpenseTotal(k) > 0);
+    if(!keys.length) return 0;
+    const sum = keys.reduce((s,k)=>s+cycleExpenseTotal(k),0);
+    return sum / keys.length;
+  }
+  function currentIncome(){
+    const k = DB.currentCycleKey;
+    const c = k ? DB.cycles[k] : null;
+    if(!c) return 0;
+    return (c.salary != null && c.salary > 0) ? c.salary : (c.budget || 0);
+  }
+  function monthlyCommitThisCycle(){
+    const k = DB.currentCycleKey;
+    const c = k ? DB.cycles[k] : null;
+    if(!c) return 0;
+    return c.transactions.filter(t=>t.type==='expense' && t.category===COMMIT_CAT.id).reduce((s,t)=>s+t.amount,0);
+  }
+  function totalCommitRemaining(){
+    return (DB.commitments||[]).reduce((s,c)=>s+commitRemaining(c),0);
+  }
+  function catSpendInCycle(key, id){
+    const c = DB.cycles[key];
+    if(!c) return 0;
+    return c.transactions.filter(t=>t.type==='expense' && t.category===id).reduce((s,t)=>s+t.amount,0);
+  }
+  function catThisCycle(id){ return DB.currentCycleKey ? catSpendInCycle(DB.currentCycleKey, id) : 0; }
+  function catMonthlyAvg(id){
+    const vals = orderedKeys().map(k=>catSpendInCycle(k,id)).filter(v=>v>0);
+    if(!vals.length) return 0;
+    return vals.reduce((a,b)=>a+b,0)/vals.length;
+  }
+
+  function renderFinancial(){
+    const income = currentIncome();
+    const avgE = avgMonthlyExpense();
+    const leftover = income - avgE;
+    const rate = income > 0 ? leftover/income : null;
+    const remCommit = totalCommitRemaining();
+    const monCommit = monthlyCommitThisCycle();
+    const savings = savingsTotal();
+
+    let label, color, note;
+    if(income <= 0){
+      label = 'غير محدد'; color = 'var(--text-2)';
+      note = 'أضف راتبك (من الإعدادات ← استلام راتب جديد) لبدء التقييم.';
+    } else if(rate >= 0.25 && remCommit <= income*4){
+      label = 'ممتاز'; color = 'var(--topup)';
+      note = 'مصاريفك أقل بكثير من دخلك والتزاماتك ضمن حدود آمنة. استمر على الادخار.';
+    } else if(rate >= 0.10){
+      label = 'جيد'; color = 'var(--gold)';
+      note = 'وضعك مستقر مع هامش ادخار معقول. راقب الالتزامات كي لا ترتفع.';
+    } else if(rate >= 0){
+      label = 'متوسط'; color = 'var(--gold-dim)';
+      note = 'مصاريفك قريبة جدًا من دخلك، حاول تقليل المصاريف أو رفع الفائض.';
+    } else {
+      label = 'يحتاج انتباه'; color = 'var(--expense)';
+      note = 'متوسط مصاريفك يتجاوز دخلك الشهري. راجع أكبر بنود الصرف.';
+    }
+
+    const badge = document.getElementById('finRatingBadge');
+    badge.textContent = label;
+    badge.style.color = color;
+    badge.style.borderColor = color;
+    document.getElementById('finRatingNote').textContent = note;
+
+    const ratePct = rate != null ? Math.round(rate*100) : 0;
+    const commitRatioPct = income > 0 ? Math.round((monCommit/income)*100) : 0;
+    const cells = [
+      {lbl:'الدخل الشهري (الراتب)', num:fmtNum(income)+' ر.س', cls:''},
+      {lbl:'متوسط المصاريف الشهرية', num:fmtNum(avgE)+' ر.س', cls:''},
+      {lbl:'الفائض التقديري الشهري', num:fmtNum(leftover)+' ر.س ('+ratePct+'%)', cls: leftover>=0?'pos':'neg'},
+      {lbl:'التزامات هذا الشهر', num:fmtNum(monCommit)+' ر.س ('+commitRatioPct+'%)', cls: monCommit>0?'neg':''},
+      {lbl:'إجمالي الالتزامات المتبقية', num:fmtNum(remCommit)+' ر.س', cls: remCommit>0?'neg':''},
+      {lbl:'إجمالي المدخرات', num:fmtNum(savings)+' ر.س', cls: savings>=0?'pos':'neg'},
+    ];
+    document.getElementById('finGrid').innerHTML = cells.map(c=>
+      `<div class="fin-cell"><div class="lbl">${c.lbl}</div><div class="num ${c.cls} mono">${c.num}</div></div>`
+    ).join('');
+
+    // fixed monthly bills + top categories this cycle
+    renderFinBills(income);
+    renderFinBreakdown();
+  }
+
+  function renderFinBills(income){
+    const card = document.getElementById('finBillsCard');
+    const wrap = document.getElementById('finBills');
+    const bills = DB.billCategories || [];
+    if(!bills.length){ card.style.display='none'; return; }
+    card.style.display='block';
+    let totalMonth = 0, totalAvg = 0;
+    const rows = bills.map(id=>{
+      const cat = findCategory(id);
+      const month = catThisCycle(id);
+      const avg = catMonthlyAvg(id);
+      totalMonth += month; totalAvg += avg;
+      return { label: cat ? (cat.icon + ' ' + cat.label) : id, month, avg };
+    });
+    wrap.innerHTML = rows.map(r=>`
+      <div class="bill-row">
+        <span class="bill-name">${r.label}</span>
+        <span class="bill-vals">
+          <span class="bill-month mono">${fmtNum(r.month)} ر.س</span>
+          <span class="bill-sub mono">متوسط ${fmtNum(r.avg)}</span>
+        </span>
+      </div>`).join('');
+    document.getElementById('finBillsTotal').textContent = fmtNum(totalMonth) + ' ر.س';
+    const pct = income>0 ? Math.round((totalMonth/income)*100) : 0;
+    document.getElementById('finBillsHint').textContent =
+      'الرقم الأول = ما صُرف هذا الشهر، والمتوسط = عبر كل الشهور المسجّلة.'
+      + (income>0 ? ' فواتيرك هذا الشهر تعادل ' + pct + '% من دخلك.' : '');
+  }
+
+  function renderFinBreakdown(){
+    const card = document.getElementById('finBreakdownCard');
+    const wrap = document.getElementById('finBreakdown');
+    const k = DB.currentCycleKey;
+    const c = k ? DB.cycles[k] : null;
+    if(!c){ card.style.display='none'; return; }
     const totals = {};
     let maxVal = 0;
-    allCats.forEach(c=> totals[c.id] = 0);
-    data.transactions.filter(t=>t.type==='expense').forEach(t=>{
+    c.transactions.filter(t=>t.type==='expense').forEach(t=>{
       totals[t.category] = (totals[t.category]||0) + t.amount;
       if(totals[t.category] > maxVal) maxVal = totals[t.category];
     });
-    if(maxVal === 0){
-      list.innerHTML = '<div class="receipt-empty">لا توجد مصروفات مسجلة بعد</div>';
-      return;
-    }
-    list.innerHTML = allCats.map(c=>{
-      const val = totals[c.id] || 0;
+    const ids = Object.keys(totals).sort((a,b)=>totals[b]-totals[a]).slice(0,5);
+    if(!ids.length){ card.style.display='none'; return; }
+    card.style.display='block';
+    wrap.innerHTML = ids.map(id=>{
+      const cat = findCategory(id) || {icon:'❔', label:'غير مصنف', color:'#888'};
+      const val = totals[id];
       const pct = maxVal>0 ? (val/maxVal)*100 : 0;
       return `<div class="cl-row">
         <div class="cl-top">
-          <span class="name">${c.icon} ${c.label}</span>
+          <span class="name">${cat.icon} ${cat.label}</span>
           <span class="val mono">${fmtNum(val)} ر.س</span>
         </div>
-        <div class="cl-track"><div class="cl-fill" style="width:${pct}%; background:${c.color};"></div></div>
+        <div class="cl-track"><div class="cl-fill" style="width:${pct}%; background:${cat.color};"></div></div>
       </div>`;
     }).join('');
   }
@@ -771,14 +1441,18 @@
   function renderAll(){
     renderHeader();
     renderHistory();
-    renderCatBreakdown();
+    renderSavings();
+    renderCommitments();
+    renderFinancial();
   }
 
   // ---------- actions ----------
   function onCategoryTap(cat){
+    if(viewCycleKey){ toast('أنت تعرض شهرًا سابقًا — ارجع للشهر الحالي لإضافة عملية'); return; }
+    if(!DB.currentCycleKey){ toast('ابدأ ميزانية الشهر أولًا'); return; }
     if(expenseAmount === '' || parseFloat(expenseAmount) <= 0) return;
     const amt = parseFloat(expenseAmount);
-    const data = ensureCycle(currentCycle.key);
+    const data = ensureCycle(DB.currentCycleKey);
     data.transactions.push({
       id: 't' + Date.now() + Math.random().toString(36).slice(2,6),
       type:'expense',
@@ -794,18 +1468,25 @@
   }
 
   function deleteTransaction(id){
-    const data = ensureCycle(currentCycle.key);
+    const c = activeCycle();
+    if(!c) return false;
+    const data = ensureCycle(c.key);
     const tx = data.transactions.find(t=>t.id === id);
     if(!tx) return false;
 
-    const msg = tx.type === 'topup'
-      ? 'هل تريد حذف عملية إضافة الرصيد؟ سيتم خصم ' + fmtNum(tx.amount) + ' ر.س من الميزانية.'
-      : 'هل تريد حذف هذه العملية من السجل؟';
+    let msg;
+    if(tx.type === 'topup') msg = 'هل تريد حذف عملية إضافة الرصيد؟ سيتم خصم ' + fmtNum(tx.amount) + ' ر.س من الميزانية.';
+    else if(tx.category === COMMIT_CAT.id) msg = 'هذه دفعة التزام. حذفها من هنا يزيلها من مصاريف الشهر فقط. متابعة؟';
+    else msg = 'هل تريد حذف هذه العملية من السجل؟';
     if(!confirm(msg)) return false;
 
     if(tx.type === 'topup'){
-      // undo the effect this top-up had on the budget when it was added
       data.budget -= tx.amount;
+    }
+    // if this expense was a commitment payment, also drop it from the commitment record
+    if(tx.category === COMMIT_CAT.id && tx.payId){
+      const cm = (DB.commitments||[]).find(x=>x.id===tx.commitmentId);
+      if(cm) cm.payments = (cm.payments||[]).filter(p=>p.id!==tx.payId);
     }
     data.transactions = data.transactions.filter(t=>t.id !== id);
     saveData();
@@ -849,13 +1530,20 @@
     }
   }
 
-  function getPreviousCycleLeftover(){
-    const prevStart = new Date(currentCycle.start.getFullYear(), currentCycle.start.getMonth()-1, 28);
-    const prevKey = dateKey(prevStart);
-    const prev = DB.cycles[prevKey];
-    if(!prev) return null;
-    const spent = prev.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-    return prev.budget - spent;
+  // start a brand-new salary cycle: closes current month, carries leftover (±) if enabled
+  function beginSalaryCycle(salaryAmt, includeCarry){
+    const now = new Date();
+    const leftover = includeCarry ? cycleLeftover(DB.currentCycleKey) : 0;
+    const key = 'c-' + dateKey(now) + '-' + Date.now().toString(36).slice(-5);
+    DB.cycles[key] = {
+      budget: salaryAmt + leftover,
+      transactions: [],
+      salary: salaryAmt,
+      carry: leftover,
+      startTs: now.getTime()
+    };
+    DB.currentCycleKey = key;
+    viewCycleKey = null;
   }
 
   function openBudgetOverlay(mode){
@@ -865,34 +1553,43 @@
     const title = document.getElementById('budgetSheetTitle');
     const actions = document.getElementById('budgetActions');
     const carryRow = document.getElementById('carryRow');
+    const closeBtn = document.getElementById('closeBudget');
+
     if(mode === 'start'){
-      title.textContent = 'ابدأ ميزانية هذا الشهر';
+      title.textContent = 'أدخل راتب هذا الشهر لبدء الحساب';
       actions.innerHTML = '<div class="btn primary" id="btnConfirmBudget">بدء الشهر</div>';
-      carryAmount = getPreviousCycleLeftover();
-      if(carryAmount !== null && carryAmount !== 0){
+      carryRow.style.display = 'none';
+      closeBtn.style.display = 'none'; // must set an initial budget
+    } else if(mode === 'newsalary'){
+      title.textContent = 'استلام راتب جديد — بدء شهر جديد';
+      actions.innerHTML = '<div class="btn primary" id="btnConfirmBudget">بدء الشهر الجديد</div>';
+      carryAmount = cycleLeftover(DB.currentCycleKey);
+      if(DB.currentCycleKey && carryAmount !== 0){
         carryEnabled = true;
         carryRow.style.display = 'flex';
-        const label = document.getElementById('carryLabel');
-        label.textContent = (carryAmount > 0
-          ? 'المتبقي من الشهر الماضي: ' + fmtNum(carryAmount) + ' ر.س (إضافة)'
-          : 'عجز من الشهر الماضي: ' + fmtNum(Math.abs(carryAmount)) + ' ر.س (خصم)');
+        document.getElementById('carryLabel').textContent = (carryAmount > 0
+          ? 'المتبقي من الشهر الحالي: ' + fmtNum(carryAmount) + ' ر.س (يُضاف)'
+          : 'عجز من الشهر الحالي: ' + fmtNum(Math.abs(carryAmount)) + ' ر.س (يُخصم)');
         document.getElementById('carrySwitch').classList.add('on');
       } else {
         carryRow.style.display = 'none';
       }
+      closeBtn.style.display = 'block';
     } else {
       title.textContent = 'تعديل ميزانية الشهر الحالي';
       actions.innerHTML =
         '<div class="btn positive" id="btnAddBudget">إضافة للرصيد</div>' +
         '<div class="btn primary" id="btnSetBudget">تعيين كإجمالي</div>';
       carryRow.style.display = 'none';
+      closeBtn.style.display = 'block';
     }
     document.getElementById('budgetOverlay').classList.add('show');
     bindBudgetActionButtons();
   }
 
   function closeBudgetOverlay(force){
-    if(force || (currentCycle && ensureCycle(currentCycle.key).budget > 0) || budgetMode==='edit'){
+    // never allow closing the very first onboarding without setting a budget
+    if(force || DB.currentCycleKey){
       document.getElementById('budgetOverlay').classList.remove('show');
     }
   }
@@ -910,13 +1607,13 @@
       confirmBtn.onclick = ()=>{
         const amt = parseFloat(budgetAmount || '0');
         if(amt <= 0){ toast('أدخل مبلغًا صحيحًا'); return; }
-        const data = ensureCycle(currentCycle.key);
-        const carry = (carryEnabled && carryAmount) ? carryAmount : 0;
-        data.budget = amt + carry;
+        const useCarry = (budgetMode === 'newsalary') && carryEnabled;
+        beginSalaryCycle(amt, useCarry);
         saveData();
         renderAll();
+        renderCatGrid();
         closeBudgetOverlay(true);
-        toast('تم بدء ميزانية الشهر');
+        toast(budgetMode === 'newsalary' ? 'بدأ شهر جديد براتب جديد' : 'تم بدء ميزانية الشهر');
       };
     }
     const addBtn = document.getElementById('btnAddBudget');
@@ -924,7 +1621,7 @@
       addBtn.onclick = ()=>{
         const amt = parseFloat(budgetAmount || '0');
         if(amt <= 0){ toast('أدخل مبلغًا صحيحًا'); return; }
-        const data = ensureCycle(currentCycle.key);
+        const data = ensureCycle(DB.currentCycleKey);
         data.budget += amt;
         data.transactions.push({id:'t'+Date.now()+Math.random().toString(36).slice(2,6), type:'topup', amount:amt, category:null, ts:Date.now()});
         saveData();
@@ -938,7 +1635,7 @@
       setBtn.onclick = ()=>{
         const amt = parseFloat(budgetAmount || '0');
         if(amt < 0){ toast('أدخل مبلغًا صحيحًا'); return; }
-        const data = ensureCycle(currentCycle.key);
+        const data = ensureCycle(DB.currentCycleKey);
         data.budget = amt;
         saveData();
         renderAll();
@@ -966,14 +1663,19 @@
     const list = document.getElementById('cmList');
     const allCats = getAllCategories();
     list.innerHTML = allCats.map(c=>{
+      const bill = isBill(c.id);
       return `<div class="cm-row">
         <span class="ic">${c.icon}</span>
         <span class="lb">${c.label}</span>
+        <span class="cm-bill${bill?' on':''}" data-billcat="${c.id}" title="اعتبارها فاتورة شهرية ثابتة">${bill?'★ فاتورة':'☆ فاتورة'}</span>
         <span class="cm-del" data-delcat="${c.id}">✕</span>
       </div>`;
     }).join('');
     list.querySelectorAll('[data-delcat]').forEach(btn=>{
       btn.addEventListener('click', ()=> deleteCategory(btn.dataset.delcat));
+    });
+    list.querySelectorAll('[data-billcat]').forEach(btn=>{
+      btn.addEventListener('click', ()=> toggleBill(btn.dataset.billcat));
     });
   }
 
@@ -987,7 +1689,6 @@
     await saveData();
     renderCatGrid();
     renderCatManageList();
-    renderCatBreakdown();
     toast('تمت إضافة فئة "' + label + '"');
   }
 
@@ -1006,7 +1707,6 @@
     await saveData();
     renderCatGrid();
     renderCatManageList();
-    renderCatBreakdown();
   }
 
   async function restoreDefaultCategories(){
@@ -1014,21 +1714,19 @@
     await saveData();
     renderCatGrid();
     renderCatManageList();
-    renderCatBreakdown();
     toast('تمت استعادة الفئات الأساسية');
   }
 
   function switchScreen(name){
     activeScreen = name;
+    if(name === 'calc'){ viewCycleKey = null; } // returning home always shows current month
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-'+name).classList.add('active');
-    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.screen===name));
+    document.querySelectorAll('.navbtn').forEach(t=>t.classList.toggle('active', t.dataset.screen===name));
+    renderAll();
   }
 
-  // ---------- backup / restore (localStorage is tied to this exact page/origin,
-  // so if the file is ever moved, renamed, re-added to the home screen, or re-hosted,
-  // the browser may treat it as a new, empty storage. Exporting a JSON backup lets
-  // the person restore their data regardless of where/how the file is opened next.) ----------
+  // ---------- backup / restore ----------
   function exportBackup(){
     try{
       const stamp = dateKey(new Date());
@@ -1068,10 +1766,22 @@
       if(!DB.customCategories) DB.customCategories = [];
       if(!DB.settings) DB.settings = { theme:'dark' };
       if(!DB.hiddenDefaults) DB.hiddenDefaults = [];
+      if(!DB.savings || typeof DB.savings!=='object') DB.savings = {opening:0, entries:[]};
+      if(!Array.isArray(DB.savings.entries)) DB.savings.entries = [];
+      if(typeof DB.savings.opening !== 'number') DB.savings.opening = 0;
+      if(!Array.isArray(DB.commitments)) DB.commitments = [];
+      if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
+      Object.keys(DB.cycles).forEach(k=>{
+        const c = DB.cycles[k];
+        if(c && typeof c.startTs !== 'number'){ const d=new Date(k); c.startTs = isNaN(d.getTime())?0:d.getTime(); }
+      });
+      if(!DB.currentCycleKey || !DB.cycles[DB.currentCycleKey]){
+        const ks = orderedKeys();
+        DB.currentCycleKey = ks.length ? ks[ks.length-1] : null;
+      }
+      viewCycleKey = null;
       await saveData();
       applyTheme();
-      currentCycle = getCycleForDate(new Date());
-      ensureCycle(currentCycle.key);
       renderCatGrid();
       renderAll();
       document.getElementById('settingsOverlay').classList.remove('show');
@@ -1082,45 +1792,48 @@
 
   function populatePastMonths(){
     const sel = document.getElementById('pastMonthSelect');
-    sel.innerHTML = '<option value="">اختر الشهر</option>';
-    Object.keys(DB.cycles).sort().reverse().forEach(key=>{
-      const d = new Date(key);
+    sel.innerHTML = '<option value="">الشهر الحالي</option>';
+    orderedKeys().slice().reverse().forEach(key=>{
+      const cyc = buildCycle(key);
       const opt = document.createElement('option');
       opt.value = key;
-      opt.textContent = fmtShort(d) + ' فما بعد';
+      opt.textContent = fmtShort(cyc.start) + (cyc.end ? ' — ' + fmtShort(cyc.end) : ' — الآن');
+      if(key === DB.currentCycleKey) opt.textContent += ' (الحالي)';
       sel.appendChild(opt);
     });
+    sel.value = viewCycleKey || '';
   }
 
   // ---------- init ----------
   async function init(){
     await loadData();
     applyTheme();
-    currentCycle = getCycleForDate(new Date());
-    const data = ensureCycle(currentCycle.key);
 
     renderCatGrid();
     renderAmountDisplay();
     renderAll();
 
-    if(data.budget <= 0){
+    // first-run onboarding if no cycle/budget yet
+    const cur = DB.currentCycleKey ? DB.cycles[DB.currentCycleKey] : null;
+    if(!cur || !(cur.budget > 0)){
       openBudgetOverlay('start');
     }
 
-    document.querySelectorAll('.tab').forEach(t=>{
+    document.querySelectorAll('.navbtn').forEach(t=>{
       t.addEventListener('click', ()=> switchScreen(t.dataset.screen));
     });
 
     document.querySelectorAll('#screen-calc .key').forEach(k=>{
       k.addEventListener('click', ()=> pressKey(k.dataset.k));
     });
-
     document.querySelectorAll('#budgetOverlay .key').forEach(k=>{
       k.addEventListener('click', ()=> pressBudgetKey(k.dataset.bk));
     });
+    document.getElementById('closeBudget').addEventListener('click', ()=> closeBudgetOverlay(false));
 
     document.getElementById('themeSwitch').addEventListener('click', toggleTheme);
 
+    // category management
     document.getElementById('rowManageCats').addEventListener('click', ()=>{
       document.getElementById('settingsOverlay').classList.remove('show');
       renderCatManageList();
@@ -1142,6 +1855,7 @@
       activeDetailCatId = null;
     });
 
+    // settings
     document.getElementById('btnSettings').addEventListener('click', ()=>{
       populatePastMonths();
       document.getElementById('settingsOverlay').classList.add('show');
@@ -1149,7 +1863,12 @@
     document.getElementById('closeSettings').addEventListener('click', ()=>{
       document.getElementById('settingsOverlay').classList.remove('show');
     });
+    document.getElementById('rowNewSalary').addEventListener('click', ()=>{
+      document.getElementById('settingsOverlay').classList.remove('show');
+      openBudgetOverlay('newsalary');
+    });
     document.getElementById('rowEditBudget').addEventListener('click', ()=>{
+      if(!DB.currentCycleKey){ toast('ابدأ شهرًا أولًا'); return; }
       document.getElementById('settingsOverlay').classList.remove('show');
       openBudgetOverlay('edit');
     });
@@ -1163,15 +1882,49 @@
       e.target.value = '';
     });
     document.getElementById('rowDanger').addEventListener('click', async ()=>{
-      if(confirm('سيتم حذف جميع البيانات المحفوظة نهائيًا. متابعة؟')){
-        DB.cycles = {};
+      if(confirm('سيتم حذف جميع البيانات المحفوظة نهائيًا (المصاريف والإدخار والالتزامات). متابعة؟')){
+        DB = { cycles:{}, currentCycleKey:null, savings:{opening:0, entries:[]}, commitments:[], customCategories:[], settings:DB.settings||{theme:'dark'}, hiddenDefaults:[], billCategories:DEFAULT_BILLS.slice() };
+        viewCycleKey = null;
         await saveData();
-        currentCycle = getCycleForDate(new Date());
-        ensureCycle(currentCycle.key);
+        renderCatGrid();
         renderAll();
         document.getElementById('settingsOverlay').classList.remove('show');
         openBudgetOverlay('start');
       }
+    });
+
+    // view past month
+    document.getElementById('pastMonthSelect').addEventListener('change', (e)=>{
+      const key = e.target.value;
+      viewCycleKey = (key && key !== DB.currentCycleKey) ? key : null;
+      document.getElementById('settingsOverlay').classList.remove('show');
+      switchScreen('history');
+    });
+    document.getElementById('viewBannerBack').addEventListener('click', ()=>{
+      viewCycleKey = null;
+      renderAll();
+    });
+
+    // savings
+    document.getElementById('btnSavDeposit').addEventListener('click', ()=> openSavingsSheet('deposit'));
+    document.getElementById('btnSavWithdraw').addEventListener('click', ()=> openSavingsSheet('withdraw'));
+    document.getElementById('btnSavOpening').addEventListener('click', ()=> openSavingsSheet('opening'));
+    document.getElementById('btnSavConfirm').addEventListener('click', confirmSavings);
+    document.getElementById('closeSavings').addEventListener('click', ()=>{
+      document.getElementById('savingsOverlay').classList.remove('show');
+    });
+
+    // commitments
+    document.getElementById('btnAddCommit').addEventListener('click', openCommitAdd);
+    document.getElementById('btnCommitAddConfirm').addEventListener('click', confirmCommitAdd);
+    document.getElementById('closeCommitAdd').addEventListener('click', ()=>{
+      document.getElementById('commitAddOverlay').classList.remove('show');
+    });
+    document.getElementById('btnCommitPayConfirm').addEventListener('click', confirmCommitPay);
+    document.getElementById('btnCommitDelete').addEventListener('click', deleteCommitment);
+    document.getElementById('closeCommitDetail').addEventListener('click', ()=>{
+      document.getElementById('commitDetailOverlay').classList.remove('show');
+      activeCommitId = null;
     });
   }
 
