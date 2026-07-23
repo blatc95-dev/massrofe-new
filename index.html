@@ -913,15 +913,28 @@
     if(!c) return 0;
     return c.budget - cycleExpenseTotal(key);
   }
-  // expense total excluding fixed monthly bills and commitment payments
-  // (these are predictable/recurring, so they shouldn't skew the daily spending rate)
-  function cycleExpenseTotalForRate(key){
-    const c = DB.cycles[key];
-    if(!c) return 0;
+  // daily spending rate: trailing 30 calendar days, across all cycles (independent of
+  // the salary cycle boundaries), excluding fixed monthly bills and commitment payments
+  // (those are predictable/recurring and shouldn't skew the day-to-day rate)
+  function trailingSpendForRate(days){
+    const today = startOfDay(new Date());
+    const windowStart = new Date(today.getTime() - (days-1)*86400000);
     const fixed = DB.billCategories || [];
-    return c.transactions
-      .filter(t=> t.type==='expense' && t.category!==COMMIT_CAT.id && !fixed.includes(t.category))
-      .reduce((s,t)=>s+t.amount,0);
+    let sum = 0;
+    Object.keys(DB.cycles).forEach(k=>{
+      DB.cycles[k].transactions.forEach(t=>{
+        if(t.type!=='expense' || t.category===COMMIT_CAT.id || fixed.includes(t.category)) return;
+        const d = startOfDay(new Date(t.ts));
+        if(d >= windowStart && d <= today) sum += t.amount;
+      });
+    });
+    return sum;
+  }
+  function daysSinceTrackingStarted(){
+    const ks = orderedKeys();
+    if(!ks.length) return 1;
+    const firstStart = startOfDay(new Date(DB.cycles[ks[0]].startTs || Date.now()));
+    return Math.max(Math.round((startOfDay(new Date()) - firstStart)/86400000) + 1, 1);
   }
 
   // ---------- savings / commitments helpers ----------
@@ -949,6 +962,14 @@
   }
   function commitRemaining(c){
     return Math.max(0, (c.total||0) - commitPaid(c));
+  }
+  // the recurring monthly amount: whatever was paid last time (falls back to the
+  // amount entered when the commitment was first added), so the user only ever
+  // types it once and every following month just confirms the same figure
+  function commitUsualAmount(c){
+    const pays = (c.payments||[]).slice().sort((a,b)=>b.ts-a.ts);
+    if(pays.length) return pays[0].amount;
+    return c.initialPaid > 0 ? c.initialPaid : '';
   }
 
   // ---------- rendering ----------
@@ -1005,7 +1026,8 @@
     }
     const daysRemaining = Math.max(PROJECTED_LEN - daysPassed + 1, 1);
 
-    const avgSpentPerDay = cycleExpenseTotalForRate(c.key) / daysPassed;
+    const rateDays = Math.min(PROJECTED_LEN, daysSinceTrackingStarted());
+    const avgSpentPerDay = trailingSpendForRate(PROJECTED_LEN) / rateDays;
     const avgAvailablePerDay = remaining / daysRemaining;
 
     document.getElementById('avgSpentPerDay').textContent = fmtNum(avgSpentPerDay) + ' ر.س';
@@ -1473,8 +1495,8 @@
     const paid = commitPaid(c), rem = commitRemaining(c);
     document.getElementById('commitDetailFigs').innerHTML =
       `<span>الإجمالي ${fmtNum(c.total)} — المدفوع ${fmtNum(paid)}</span><span class="mono">المتبقي ${fmtNum(rem)} ر.س</span>`;
-    // pre-fill with the last payment amount so the user can just tap "تسجيل الدفعة" next time
-    document.getElementById('commitPayInput').value = c.lastPayAmount ? c.lastPayAmount : '';
+    // pre-fill with the usual monthly amount so the user can just tap "تسجيل الدفعة" next time
+    document.getElementById('commitPayInput').value = commitUsualAmount(c);
     renderCommitPayList(c);
     document.getElementById('commitDetailOverlay').classList.add('show');
   }
@@ -1516,7 +1538,6 @@
     const payId = 'p'+ts+Math.random().toString(36).slice(2,6);
     c.payments = c.payments || [];
     c.payments.push({ id:payId, amount:amt, ts });
-    c.lastPayAmount = amt;
     // also deduct from the CURRENT month budget as an expense (linked to this payment)
     const data = ensureCycle(DB.currentCycleKey);
     data.transactions.push({
@@ -1667,10 +1688,9 @@
         </span>
       </div>`).join('');
     document.getElementById('finBillsTotal').textContent = fmtNum(totalMonth) + ' ر.س';
-    const pct = income>0 ? Math.round((totalMonth/income)*100) : 0;
-    document.getElementById('finBillsHint').textContent =
-      'الرقم الأول = ما صُرف هذا الشهر، والمتوسط = عبر كل الشهور المسجّلة.'
-      + (income>0 ? ' فواتيرك هذا الشهر تعادل ' + pct + '% من دخلك.' : '');
+    let hint = 'متوسط إجمالي الفواتير الشهرية (كل الفواتير المضافة): ' + fmtNum(totalAvg) + ' ر.س';
+    if(income>0) hint += ' — يعادل ' + Math.round((totalAvg/income)*100) + '% من دخلك.';
+    document.getElementById('finBillsHint').textContent = hint;
   }
 
   function renderFinBreakdown(){
