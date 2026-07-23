@@ -680,6 +680,7 @@
     {id:'power',    label:'الكهرباء',           icon:'💡', color:'#E3C567'},
     {id:'net',      label:'الانترنت والجوال',    icon:'📶', color:'#6FA8C9'},
     {id:'kids',     label:'الورعان',            icon:'🧒', color:'#D98BA0'},
+    {id:'education',label:'تعليم الأولاد',       icon:'🎓', color:'#B58BDB'},
     {id:'grocery',  label:'البقالة',            icon:'🛒', color:'#9CB86B'},
     {id:'car',      label:'السيارة',            icon:'🚗', color:'#7C8CC4'},
     {id:'furniture',label:'أثاثة',              icon:'🛋️', color:'#B08C6A'},
@@ -713,7 +714,7 @@
   }
 
   // categories treated as fixed monthly bills by default
-  const DEFAULT_BILLS = ['power','net','car'];
+  const DEFAULT_BILLS = ['power','net','education'];
 
   let DB = { cycles: {}, currentCycleKey:null, savings:{opening:0, entries:[]}, commitments:[], customCategories: [], settings: { theme:'dark' }, hiddenDefaults: [], billCategories: DEFAULT_BILLS.slice() };
   let currentCycle = null; // {start,end,key}  (derived)
@@ -840,6 +841,13 @@
     migrateSavings();
     if(!Array.isArray(DB.commitments)) DB.commitments = [];
     if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
+    // one-time migration: car is no longer a fixed monthly bill by default,
+    // and the new "children's education" bill category is added for existing users
+    if(!DB.migratedFixedBillsV2){
+      DB.billCategories = (DB.billCategories||[]).filter(id=>id!=='car');
+      if(!DB.billCategories.includes('education')) DB.billCategories.push('education');
+      DB.migratedFixedBillsV2 = true;
+    }
 
     // migrate: ensure each cycle has a startTs; pick current cycle if none set
     Object.keys(DB.cycles).forEach(k=>{
@@ -904,6 +912,16 @@
     const c = DB.cycles[key];
     if(!c) return 0;
     return c.budget - cycleExpenseTotal(key);
+  }
+  // expense total excluding fixed monthly bills and commitment payments
+  // (these are predictable/recurring, so they shouldn't skew the daily spending rate)
+  function cycleExpenseTotalForRate(key){
+    const c = DB.cycles[key];
+    if(!c) return 0;
+    const fixed = DB.billCategories || [];
+    return c.transactions
+      .filter(t=> t.type==='expense' && t.category!==COMMIT_CAT.id && !fixed.includes(t.category))
+      .reduce((s,t)=>s+t.amount,0);
   }
 
   // ---------- savings / commitments helpers ----------
@@ -987,7 +1005,7 @@
     }
     const daysRemaining = Math.max(PROJECTED_LEN - daysPassed + 1, 1);
 
-    const avgSpentPerDay = spent / daysPassed;
+    const avgSpentPerDay = cycleExpenseTotalForRate(c.key) / daysPassed;
     const avgAvailablePerDay = remaining / daysRemaining;
 
     document.getElementById('avgSpentPerDay').textContent = fmtNum(avgSpentPerDay) + ' ر.س';
@@ -1455,7 +1473,8 @@
     const paid = commitPaid(c), rem = commitRemaining(c);
     document.getElementById('commitDetailFigs').innerHTML =
       `<span>الإجمالي ${fmtNum(c.total)} — المدفوع ${fmtNum(paid)}</span><span class="mono">المتبقي ${fmtNum(rem)} ر.س</span>`;
-    document.getElementById('commitPayInput').value = '';
+    // pre-fill with the last payment amount so the user can just tap "تسجيل الدفعة" next time
+    document.getElementById('commitPayInput').value = c.lastPayAmount ? c.lastPayAmount : '';
     renderCommitPayList(c);
     document.getElementById('commitDetailOverlay').classList.add('show');
   }
@@ -1497,6 +1516,7 @@
     const payId = 'p'+ts+Math.random().toString(36).slice(2,6);
     c.payments = c.payments || [];
     c.payments.push({ id:payId, amount:amt, ts });
+    c.lastPayAmount = amt;
     // also deduct from the CURRENT month budget as an expense (linked to this payment)
     const data = ensureCycle(DB.currentCycleKey);
     data.transactions.push({
