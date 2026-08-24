@@ -482,10 +482,22 @@
         </div>
         <div class="big-num mono" id="restraintMonthTotal">٠ ر.س</div>
       </div>
-      <div class="screen-title" style="justify-content:space-between;">
-        <span>🙅 قرارات التوفير</span>
-        <span class="btn primary" id="btnAddRestraint" style="flex:0 0 auto; padding:8px 14px; font-size:13px;">+ إضافة</span>
+
+      <div class="amount-row">
+        <span class="amt placeholder" id="restraintAmtDisplay">كم كنت ستصرف؟</span>
+        <span class="mode-pill budget">توفير</span>
       </div>
+      <div class="keypad">
+        <div class="key" data-rk="7">٧</div><div class="key" data-rk="8">٨</div><div class="key" data-rk="9">٩</div>
+        <div class="key" data-rk="4">٤</div><div class="key" data-rk="5">٥</div><div class="key" data-rk="6">٦</div>
+        <div class="key" data-rk="1">١</div><div class="key" data-rk="2">٢</div><div class="key" data-rk="3">٣</div>
+        <div class="key func" data-rk=".">٫</div><div class="key" data-rk="0">٠</div><div class="key func" data-rk="back">⌫</div>
+      </div>
+      <div class="cats-hint" id="restraintCatsHint">أدخل المبلغ بالأعلى ثم اختر عن ماذا تراجعت لتسجيله كتوفير</div>
+      <div class="cats-title" id="restraintCatsTitle" style="display:none;">اختر عن ماذا تراجعت</div>
+      <div class="cat-grid" id="restraintTagGrid" style="display:none;"></div>
+
+      <div class="screen-title" style="margin-top:16px;">آخر قرارات التوفير</div>
       <div id="restraintList"></div>
     </div>
   </div>
@@ -652,21 +664,6 @@
   </div>
 </div>
 
-<!-- RESTRAINT (TEMPTATION SAVINGS) ADD SHEET -->
-<div class="overlay" id="restraintAddOverlay">
-  <div class="sheet">
-    <h3>سجل قرار توفير</h3>
-    <label class="fld-l">كم كنت ستصرف لو اشتريت؟ (ر.س)</label>
-    <input type="text" inputmode="decimal" id="restraintAmountInput" class="field" placeholder="0">
-    <label class="fld-l">ماذا قررت ألا تشتريه؟ (اختياري)</label>
-    <input type="text" id="restraintNoteInput" class="field" placeholder="مثال: قهوة، حذاء جديد">
-    <div class="budget-actions">
-      <div class="btn primary" id="btnRestraintConfirm">حفظ كمكسب</div>
-    </div>
-    <div class="close-sheet" id="closeRestraintAdd">إلغاء</div>
-  </div>
-</div>
-
 <!-- COMMITMENT ADD SHEET -->
 <div class="overlay" id="commitAddOverlay">
   <div class="sheet">
@@ -729,6 +726,23 @@
   // Virtual category for commitment payments (shown in history/breakdown, not selectable).
   const COMMIT_CAT = {id:'__commit', label:'الالتزامات', icon:'💳', color:'#C88A4A'};
 
+  // quick-tap "reasons" for the restraint (temptation savings) tab — mirrors the
+  // expense category grid on the home screen, but for what you decided NOT to buy.
+  const RESTRAINT_TAGS = [
+    {id:'coffee',    label:'قهوة ومقاهي',      icon:'☕'},
+    {id:'eatout',    label:'أكل خارجي',        icon:'🍔'},
+    {id:'clothes',   label:'ملابس',            icon:'👗'},
+    {id:'online',    label:'تسوق أونلاين',      icon:'🛍️'},
+    {id:'gadgets',   label:'إلكترونيات',        icon:'📱'},
+    {id:'fun',       label:'ألعاب وترفيه',      icon:'🎮'},
+    {id:'trip',      label:'رحلة أو سفر',       icon:'✈️'},
+    {id:'home',      label:'كماليات المنزل',    icon:'🏠'},
+    {id:'subs',      label:'اشتراكات',          icon:'📺'},
+    {id:'gifts',     label:'هدايا',            icon:'🎁'},
+    {id:'car',       label:'إكسسوارات السيارة', icon:'🚗'},
+    {id:'other',     label:'أخرى',             icon:'🏷️'},
+  ];
+
   const AR_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   const STORE_KEY = 'expense-tracker-data';
 
@@ -758,6 +772,7 @@
   let currentCycle = null; // {start,end,key}  (derived)
   let viewCycleKey = null;  // when set, we render a past cycle read-only
   let expenseAmount = '';
+  let restraintAmount = '';
   let budgetAmount = '';
   let budgetMode = 'start'; // 'start' | 'newsalary' | 'edit'
   let activeScreen = 'calc';
@@ -1468,7 +1483,7 @@
     return (DB.restraint.entries||[]).filter(e=> restraintMonthKey(new Date(e.ts)) === monthKey);
   }
 
-  function renderRestraint(){
+  function renderRestraintTotals(){
     const total = restraintTotalAll();
     document.getElementById('restraintTotal').textContent = fmtNum(total) + ' ر.س';
 
@@ -1478,7 +1493,9 @@
     const monthEntries = restraintEntriesForMonth(monthKey);
     const monthTotal = monthEntries.reduce((s,e)=>s+(e.amount||0),0);
     document.getElementById('restraintMonthTotal').textContent = fmtNum(monthTotal) + ' ر.س';
+  }
 
+  function renderRestraintList(){
     const list = document.getElementById('restraintList');
     const entries = (DB.restraint.entries||[]).slice().sort((a,b)=>b.ts-a.ts);
     if(!entries.length){
@@ -1486,10 +1503,12 @@
       return;
     }
     list.innerHTML = entries.map(e=>{
+      const tag = findRestraintTag(e.tagId);
+      const label = tag ? (tag.icon + ' ' + tag.label) : 'قرار توفير';
       const d = new Date(e.ts);
       const dateStr = formatGregorian(d) + ' • ' + formatTimeOnly(d);
       return `<div class="entry-row">
-        <div class="entry-info"><div class="entry-note">${e.note ? e.note : 'قرار توفير'}</div><div class="entry-date">${dateStr}</div></div>
+        <div class="entry-info"><div class="entry-note">${label}</div><div class="entry-date">${dateStr}</div></div>
         <span class="entry-amt pos mono">+${fmtNum(e.amount)}</span>
         <span class="entry-del" data-restraintdel="${e.id}">✕</span>
       </div>`;
@@ -1499,22 +1518,75 @@
     });
   }
 
-  function openRestraintAdd(){
-    document.getElementById('restraintAmountInput').value = '';
-    document.getElementById('restraintNoteInput').value = '';
-    document.getElementById('restraintAddOverlay').classList.add('show');
+  function renderRestraint(){
+    renderRestraintTotals();
+    renderRestraintList();
   }
 
-  async function confirmRestraintAdd(){
-    const amt = parseInput('restraintAmountInput');
-    if(amt <= 0){ toast('أدخل مبلغًا صحيحًا'); return; }
-    const note = document.getElementById('restraintNoteInput').value.trim();
+  function findRestraintTag(id){ return RESTRAINT_TAGS.find(t=>t.id===id) || null; }
+
+  function renderRestraintAmountDisplay(){
+    const el = document.getElementById('restraintAmtDisplay');
+    if(restraintAmount === ''){
+      el.textContent = 'كم كنت ستصرف؟';
+      el.classList.add('placeholder');
+    } else {
+      el.textContent = '+ ' + restraintAmount + ' ر.س';
+      el.classList.remove('placeholder');
+    }
+    updateRestraintTagGridState();
+  }
+
+  function renderRestraintTagGrid(){
+    const grid = document.getElementById('restraintTagGrid');
+    grid.innerHTML = '';
+    RESTRAINT_TAGS.forEach(tag=>{
+      const el = document.createElement('div');
+      el.className = 'cat-btn';
+      el.dataset.tag = tag.id;
+      el.innerHTML = `<span class="ic">${tag.icon}</span><span class="lb">${tag.label}</span>`;
+      el.addEventListener('click', ()=> onRestraintTagTap(tag));
+      grid.appendChild(el);
+    });
+    updateRestraintTagGridState();
+  }
+
+  function updateRestraintTagGridState(){
+    const enabled = restraintAmount !== '' && parseFloat(restraintAmount) > 0;
+    const grid = document.getElementById('restraintTagGrid');
+    const title = document.getElementById('restraintCatsTitle');
+    const hint = document.getElementById('restraintCatsHint');
+    if(grid) grid.style.display = enabled ? 'grid' : 'none';
+    if(title) title.style.display = enabled ? 'block' : 'none';
+    if(hint) hint.style.display = enabled ? 'none' : 'block';
+    grid.querySelectorAll('.cat-btn').forEach(el=>{
+      el.classList.toggle('enabled', enabled);
+    });
+  }
+
+  function pressRestraintKey(k){
+    if(k === 'back'){
+      restraintAmount = restraintAmount.slice(0,-1);
+    } else if(k === '.'){
+      if(!restraintAmount.includes('.')) restraintAmount += (restraintAmount===''?'0.':'.');
+    } else {
+      if(restraintAmount === '0') restraintAmount = k;
+      else restraintAmount += k;
+    }
+    renderRestraintAmountDisplay();
+  }
+
+  async function onRestraintTagTap(tag){
+    if(restraintAmount === '' || parseFloat(restraintAmount) <= 0) return;
+    const amt = parseFloat(restraintAmount);
     DB.restraint.entries = DB.restraint.entries || [];
-    DB.restraint.entries.push({ id:'r'+Date.now()+Math.random().toString(36).slice(2,6), amount:amt, note, ts:Date.now() });
+    DB.restraint.entries.push({ id:'r'+Date.now()+Math.random().toString(36).slice(2,6), amount:amt, tagId:tag.id, ts:Date.now() });
+    restraintAmount = '';
+    renderRestraintAmountDisplay();
     await saveData();
-    document.getElementById('restraintAddOverlay').classList.remove('show');
-    renderRestraint();
-    toast('أحسنت! تم تسجيل ' + fmtNum(amt) + ' ر.س كتوفير');
+    renderRestraintTotals();
+    renderRestraintList();
+    toast('أحسنت! تم تسجيل ' + fmtNum(amt) + ' ر.س كتوفير — ' + tag.label);
   }
 
   async function deleteRestraintEntry(id){
@@ -2211,6 +2283,8 @@
 
     renderCatGrid();
     renderAmountDisplay();
+    renderRestraintTagGrid();
+    renderRestraintAmountDisplay();
     updateChromeForScreen();
     renderAll();
 
@@ -2226,6 +2300,9 @@
 
     document.querySelectorAll('#screen-calc .key').forEach(k=>{
       k.addEventListener('click', ()=> pressKey(k.dataset.k));
+    });
+    document.querySelectorAll('#screen-restraint .key').forEach(k=>{
+      k.addEventListener('click', ()=> pressRestraintKey(k.dataset.rk));
     });
     document.querySelectorAll('#budgetOverlay .key').forEach(k=>{
       k.addEventListener('click', ()=> pressBudgetKey(k.dataset.bk));
@@ -2316,13 +2393,6 @@
     document.getElementById('btnJarDelete').addEventListener('click', deleteJar);
     document.getElementById('closeJarEdit').addEventListener('click', ()=>{
       document.getElementById('jarEditOverlay').classList.remove('show');
-    });
-
-    // restraint (temptation savings)
-    document.getElementById('btnAddRestraint').addEventListener('click', openRestraintAdd);
-    document.getElementById('btnRestraintConfirm').addEventListener('click', confirmRestraintAdd);
-    document.getElementById('closeRestraintAdd').addEventListener('click', ()=>{
-      document.getElementById('restraintAddOverlay').classList.remove('show');
     });
 
     // commitments
