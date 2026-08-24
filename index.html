@@ -468,6 +468,28 @@
     </div>
   </div>
 
+  <!-- RESTRAINT (TEMPTATION SAVINGS) SCREEN -->
+  <div class="screen" id="screen-restraint">
+    <div class="screen-scroll">
+      <div class="sec-card">
+        <div class="sec-h">إجمالي ما وفرته منذ البداية</div>
+        <div class="big-num mono gold" id="restraintTotal">٠ ر.س</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-h" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>توفير هذا الشهر</span>
+          <span id="restraintMonthLabel" style="color:var(--text-3); font-size:11.5px;"></span>
+        </div>
+        <div class="big-num mono" id="restraintMonthTotal">٠ ر.س</div>
+      </div>
+      <div class="screen-title" style="justify-content:space-between;">
+        <span>🙅 قرارات التوفير</span>
+        <span class="btn primary" id="btnAddRestraint" style="flex:0 0 auto; padding:8px 14px; font-size:13px;">+ إضافة</span>
+      </div>
+      <div id="restraintList"></div>
+    </div>
+  </div>
+
   <!-- COMMITMENTS SCREEN -->
   <div class="screen" id="screen-commitments">
     <div class="screen-scroll">
@@ -512,6 +534,7 @@
   <div class="navbtn active" data-screen="calc"><span class="nic">🧮</span><span class="nlb">الرئيسية</span></div>
   <div class="navbtn" data-screen="history"><span class="nic">🧾</span><span class="nlb">السجل</span></div>
   <div class="navbtn" data-screen="savings"><span class="nic">💰</span><span class="nlb">الإدخار</span></div>
+  <div class="navbtn" data-screen="restraint"><span class="nic">🙅</span><span class="nlb">التوفير</span></div>
   <div class="navbtn" data-screen="commitments"><span class="nic">💳</span><span class="nlb">الالتزامات</span></div>
   <div class="navbtn" data-screen="financial"><span class="nic">📊</span><span class="nlb">الوضع المالي</span></div>
 </div>
@@ -629,6 +652,21 @@
   </div>
 </div>
 
+<!-- RESTRAINT (TEMPTATION SAVINGS) ADD SHEET -->
+<div class="overlay" id="restraintAddOverlay">
+  <div class="sheet">
+    <h3>سجل قرار توفير</h3>
+    <label class="fld-l">كم كنت ستصرف لو اشتريت؟ (ر.س)</label>
+    <input type="text" inputmode="decimal" id="restraintAmountInput" class="field" placeholder="0">
+    <label class="fld-l">ماذا قررت ألا تشتريه؟ (اختياري)</label>
+    <input type="text" id="restraintNoteInput" class="field" placeholder="مثال: قهوة، حذاء جديد">
+    <div class="budget-actions">
+      <div class="btn primary" id="btnRestraintConfirm">حفظ كمكسب</div>
+    </div>
+    <div class="close-sheet" id="closeRestraintAdd">إلغاء</div>
+  </div>
+</div>
+
 <!-- COMMITMENT ADD SHEET -->
 <div class="overlay" id="commitAddOverlay">
   <div class="sheet">
@@ -716,7 +754,7 @@
   // categories treated as fixed monthly bills by default
   const DEFAULT_BILLS = ['power','net','education'];
 
-  let DB = { cycles: {}, currentCycleKey:null, savings:{opening:0, entries:[]}, commitments:[], customCategories: [], settings: { theme:'dark' }, hiddenDefaults: [], billCategories: DEFAULT_BILLS.slice() };
+  let DB = { cycles: {}, currentCycleKey:null, savings:{opening:0, entries:[]}, commitments:[], customCategories: [], settings: { theme:'dark' }, hiddenDefaults: [], billCategories: DEFAULT_BILLS.slice(), restraint:{entries:[]} };
   let currentCycle = null; // {start,end,key}  (derived)
   let viewCycleKey = null;  // when set, we render a past cycle read-only
   let expenseAmount = '';
@@ -841,6 +879,8 @@
     migrateSavings();
     if(!Array.isArray(DB.commitments)) DB.commitments = [];
     if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
+    if(!DB.restraint || typeof DB.restraint !== 'object') DB.restraint = {entries:[]};
+    if(!Array.isArray(DB.restraint.entries)) DB.restraint.entries = [];
     // one-time migration: car is no longer a fixed monthly bill by default,
     // and the new "children's education" bill category is added for existing users
     if(!DB.migratedFixedBillsV2){
@@ -1416,6 +1456,74 @@
     toast('تم حذف الوعاء');
   }
 
+  // ---------- restraint (temptation savings) ----------
+  // a purely motivational log: every time the user decides NOT to buy something,
+  // they log what it would have cost as a "win". Fully separate from the expense
+  // budget/history — logging an entry here never touches DB.cycles.
+  function restraintMonthKey(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1); }
+  function restraintTotalAll(){
+    return (DB.restraint.entries||[]).reduce((s,e)=>s+(e.amount||0),0);
+  }
+  function restraintEntriesForMonth(monthKey){
+    return (DB.restraint.entries||[]).filter(e=> restraintMonthKey(new Date(e.ts)) === monthKey);
+  }
+
+  function renderRestraint(){
+    const total = restraintTotalAll();
+    document.getElementById('restraintTotal').textContent = fmtNum(total) + ' ر.س';
+
+    const now = new Date();
+    const monthKey = restraintMonthKey(now);
+    document.getElementById('restraintMonthLabel').textContent = AR_MONTHS[now.getMonth()];
+    const monthEntries = restraintEntriesForMonth(monthKey);
+    const monthTotal = monthEntries.reduce((s,e)=>s+(e.amount||0),0);
+    document.getElementById('restraintMonthTotal').textContent = fmtNum(monthTotal) + ' ر.س';
+
+    const list = document.getElementById('restraintList');
+    const entries = (DB.restraint.entries||[]).slice().sort((a,b)=>b.ts-a.ts);
+    if(!entries.length){
+      list.innerHTML = '<div class="empty-note">لا توجد قرارات توفير مسجلة بعد. كل مرة تتراجع فيها عن شراء شيء، سجلها هنا.</div>';
+      return;
+    }
+    list.innerHTML = entries.map(e=>{
+      const d = new Date(e.ts);
+      const dateStr = formatGregorian(d) + ' • ' + formatTimeOnly(d);
+      return `<div class="entry-row">
+        <div class="entry-info"><div class="entry-note">${e.note ? e.note : 'قرار توفير'}</div><div class="entry-date">${dateStr}</div></div>
+        <span class="entry-amt pos mono">+${fmtNum(e.amount)}</span>
+        <span class="entry-del" data-restraintdel="${e.id}">✕</span>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-restraintdel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteRestraintEntry(btn.dataset.restraintdel));
+    });
+  }
+
+  function openRestraintAdd(){
+    document.getElementById('restraintAmountInput').value = '';
+    document.getElementById('restraintNoteInput').value = '';
+    document.getElementById('restraintAddOverlay').classList.add('show');
+  }
+
+  async function confirmRestraintAdd(){
+    const amt = parseInput('restraintAmountInput');
+    if(amt <= 0){ toast('أدخل مبلغًا صحيحًا'); return; }
+    const note = document.getElementById('restraintNoteInput').value.trim();
+    DB.restraint.entries = DB.restraint.entries || [];
+    DB.restraint.entries.push({ id:'r'+Date.now()+Math.random().toString(36).slice(2,6), amount:amt, note, ts:Date.now() });
+    await saveData();
+    document.getElementById('restraintAddOverlay').classList.remove('show');
+    renderRestraint();
+    toast('أحسنت! تم تسجيل ' + fmtNum(amt) + ' ر.س كتوفير');
+  }
+
+  async function deleteRestraintEntry(id){
+    if(!confirm('حذف هذا القرار من سجل التوفير؟')) return;
+    DB.restraint.entries = (DB.restraint.entries||[]).filter(e=>e.id!==id);
+    await saveData();
+    renderRestraint();
+  }
+
   // ---------- commitments screen ----------
   function renderCommitments(){
     const list = document.getElementById('commitList');
@@ -1726,6 +1834,7 @@
     renderHeader();
     renderHistory();
     renderSavings();
+    renderRestraint();
     renderCommitments();
     renderFinancial();
   }
@@ -2060,6 +2169,8 @@
       migrateSavings();
       if(!Array.isArray(DB.commitments)) DB.commitments = [];
       if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
+      if(!DB.restraint || typeof DB.restraint !== 'object') DB.restraint = {entries:[]};
+      if(!Array.isArray(DB.restraint.entries)) DB.restraint.entries = [];
       Object.keys(DB.cycles).forEach(k=>{
         const c = DB.cycles[k];
         if(c && typeof c.startTs !== 'number'){ const d=new Date(k); c.startTs = isNaN(d.getTime())?0:d.getTime(); }
@@ -2173,7 +2284,7 @@
     });
     document.getElementById('rowDanger').addEventListener('click', async ()=>{
       if(confirm('سيتم حذف جميع البيانات المحفوظة نهائيًا (المصاريف والإدخار والالتزامات). متابعة؟')){
-        DB = { cycles:{}, currentCycleKey:null, savings:{jars:makeDefaultJars(0)}, commitments:[], customCategories:[], settings:DB.settings||{theme:'dark'}, hiddenDefaults:[], billCategories:DEFAULT_BILLS.slice() };
+        DB = { cycles:{}, currentCycleKey:null, savings:{jars:makeDefaultJars(0)}, commitments:[], customCategories:[], settings:DB.settings||{theme:'dark'}, hiddenDefaults:[], billCategories:DEFAULT_BILLS.slice(), restraint:{entries:[]} };
         viewCycleKey = null;
         await saveData();
         renderCatGrid();
@@ -2205,6 +2316,13 @@
     document.getElementById('btnJarDelete').addEventListener('click', deleteJar);
     document.getElementById('closeJarEdit').addEventListener('click', ()=>{
       document.getElementById('jarEditOverlay').classList.remove('show');
+    });
+
+    // restraint (temptation savings)
+    document.getElementById('btnAddRestraint').addEventListener('click', openRestraintAdd);
+    document.getElementById('btnRestraintConfirm').addEventListener('click', confirmRestraintAdd);
+    document.getElementById('closeRestraintAdd').addEventListener('click', ()=>{
+      document.getElementById('restraintAddOverlay').classList.remove('show');
     });
 
     // commitments
