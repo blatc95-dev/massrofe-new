@@ -776,6 +776,7 @@
       <div class="budget-actions">
         <div class="btn" id="btnNewFood">+ صنف جديد غير موجود بالقائمة</div>
       </div>
+      <div class="cm-restore" id="btnRestoreFoods" style="display:none;">استعادة الأصناف الأساسية المحذوفة</div>
     </div>
     <div id="foodQtyStep" style="display:none;">
       <h3 id="foodQtyTitle">الكمية</h3>
@@ -878,17 +879,15 @@
   const COMMIT_CAT = {id:'__commit', label:'الالتزامات', icon:'💳', color:'#C88A4A'};
 
   // built-in foods for the calories tab. Values are approximate (USDA-style averages)
-  // per 100 g of the food in the state it's usually weighed (cooked unless noted),
+  // per 100 g of cooked food,
   // or per piece when per === 'piece'. User-added foods live in DB.nutrition.customFoods.
   const BUILTIN_FOODS = [
     {id:'f_chicken_breast', name:'صدر دجاج مطبوخ',          icon:'🍗', per:'100g', kcal:165, p:31,   c:0,    f:3.6},
-    {id:'f_chicken_raw',    name:'صدر دجاج نيء',            icon:'🍗', per:'100g', kcal:120, p:22.5, c:0,    f:2.6},
     {id:'f_chicken_thigh',  name:'فخذ دجاج مطبوخ بدون جلد',  icon:'🍗', per:'100g', kcal:179, p:25,   c:0,    f:8.2},
     {id:'f_rice_cooked',    name:'رز أبيض مطبوخ',           icon:'🍚', per:'100g', kcal:130, p:2.7,  c:28,   f:0.3},
-    {id:'f_rice_raw',       name:'رز أبيض نيء',             icon:'🍚', per:'100g', kcal:360, p:7,    c:79,   f:0.7},
     {id:'f_tuna_water',     name:'تونة بالماء (مصفاة)',      icon:'🐟', per:'100g', kcal:116, p:26,   c:0,    f:0.8},
     {id:'f_tuna_oil',       name:'تونة بالزيت (مصفاة)',      icon:'🐟', per:'100g', kcal:198, p:29,   c:0,    f:8.2},
-    {id:'f_salmon',         name:'سلمون',                   icon:'🍣', per:'100g', kcal:208, p:20,   c:0,    f:13},
+    {id:'f_salmon',         name:'سلمون مطبوخ',             icon:'🍣', per:'100g', kcal:206, p:22,   c:0,    f:12},
     {id:'f_white_fish',     name:'سمك أبيض مطبوخ (هامور/بلطي)', icon:'🐠', per:'100g', kcal:128, p:26, c:0, f:2.7},
     {id:'f_shrimp',         name:'روبيان مطبوخ',            icon:'🦐', per:'100g', kcal:99,  p:24,   c:0.2,  f:0.3},
     {id:'f_egg',            name:'بيض (حبة كبيرة)',          icon:'🥚', per:'piece', kcal:72, p:6.3,  c:0.4,  f:4.8},
@@ -1668,7 +1667,7 @@
   // snapshots its computed kcal/macros, so editing a custom food later never rewrites
   // past days.
   function makeEmptyNutrition(){
-    return { customFoods:[], log:{}, goal:{kcal:0, p:0}, lastQty:{}, lastUsed:{} };
+    return { customFoods:[], log:{}, goal:{kcal:0, p:0}, lastQty:{}, lastUsed:{}, hiddenFoods:[] };
   }
   function migrateNutrition(){
     if(!DB.nutrition || typeof DB.nutrition !== 'object') DB.nutrition = makeEmptyNutrition();
@@ -1678,6 +1677,7 @@
     if(!n.goal || typeof n.goal !== 'object') n.goal = {kcal:0, p:0};
     if(!n.lastQty || typeof n.lastQty !== 'object') n.lastQty = {};
     if(!n.lastUsed || typeof n.lastUsed !== 'object') n.lastUsed = {};
+    if(!Array.isArray(n.hiddenFoods)) n.hiddenFoods = [];
   }
 
   function escHtml(s){
@@ -1691,7 +1691,10 @@
       .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
   }
 
-  function allFoods(){ return DB.nutrition.customFoods.concat(BUILTIN_FOODS); }
+  function allFoods(){
+    const hidden = DB.nutrition.hiddenFoods || [];
+    return DB.nutrition.customFoods.concat(BUILTIN_FOODS.filter(f=>!hidden.includes(f.id)));
+  }
   function findFood(id){ return allFoods().find(f=>f.id===id) || null; }
   function foodFactor(food, qty){ return food.per === 'piece' ? qty : qty/100; }
   function foodBasisText(food){ return food.per === 'piece' ? 'للحبة' : 'لكل 100غ'; }
@@ -1813,6 +1816,7 @@
     }).map(x=>x.f);
 
     const list = document.getElementById('foodPickList');
+    document.getElementById('btnRestoreFoods').style.display = (DB.nutrition.hiddenFoods||[]).length ? 'block' : 'none';
     if(!foods.length){
       list.innerHTML = '<div class="empty-note" style="padding:20px 10px;">ما لقيت «' + escHtml(document.getElementById('foodSearchInput').value.trim()) + '». أضفه كصنف جديد من الزر بالأسفل.</div>';
       return;
@@ -1825,6 +1829,7 @@
         </div>
         <span class="food-kcal mono">${fmtNum(f.kcal)} <small>${foodBasisText(f)}</small></span>
         ${f.custom ? `<span class="food-act" data-foodedit="${f.id}">✎</span>` : ''}
+        <span class="food-act" data-fooddel="${f.id}">✕</span>
       </div>`).join('');
     list.querySelectorAll('[data-foodpick]').forEach(row=>{
       row.addEventListener('click', ()=> showFoodQtyStep(row.dataset.foodpick));
@@ -1836,6 +1841,37 @@
         openFoodEdit(btn.dataset.foodedit, true);
       });
     });
+    list.querySelectorAll('[data-fooddel]').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        removeFoodFromList(btn.dataset.fooddel);
+      });
+    });
+  }
+
+  // custom foods are deleted outright; built-ins are just hidden (restorable).
+  // past log entries keep their own snapshot either way.
+  async function removeFoodFromList(id){
+    const food = findFood(id);
+    if(!food) return;
+    if(!confirm('حذف «' + food.name + '» من قائمة الأكل؟ (لن يتأثر ما سجلته سابقًا)')) return;
+    if(food.custom){
+      DB.nutrition.customFoods = DB.nutrition.customFoods.filter(f=>f.id!==id);
+    } else if(!DB.nutrition.hiddenFoods.includes(id)){
+      DB.nutrition.hiddenFoods.push(id);
+    }
+    delete DB.nutrition.lastQty[id];
+    delete DB.nutrition.lastUsed[id];
+    await saveData();
+    renderFoodPickList();
+    toast('تم حذف ' + food.name + ' من القائمة');
+  }
+
+  async function restoreHiddenFoods(){
+    DB.nutrition.hiddenFoods = [];
+    await saveData();
+    renderFoodPickList();
+    toast('تمت استعادة الأصناف الأساسية');
   }
 
   function showFoodQtyStep(foodId){
@@ -2800,6 +2836,7 @@
     document.getElementById('btnFoodQtyBack').addEventListener('click', showFoodPickStep);
     document.getElementById('btnFoodQtyConfirm').addEventListener('click', confirmFoodQty);
     document.getElementById('btnNewFood').addEventListener('click', ()=>{ closeFoodPicker(); openFoodEdit(null, true); });
+    document.getElementById('btnRestoreFoods').addEventListener('click', restoreHiddenFoods);
     document.getElementById('btnFoodEditConfirm').addEventListener('click', confirmFoodEdit);
     document.getElementById('btnFoodDelete').addEventListener('click', deleteCustomFood);
     document.getElementById('closeFoodEdit').addEventListener('click', ()=> closeFoodEdit(true));
