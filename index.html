@@ -368,6 +368,47 @@
   .icon-pick.sel{ background:var(--bg-raised); border-color:var(--gold); }
   .cm-restore{text-align:center; font-size:12.5px; color:var(--text-2); padding:8px 0 0; cursor:pointer; text-decoration:underline;}
 
+  /* calories / nutrition */
+  .cal-daynav{display:flex; align-items:center; justify-content:space-between; margin:0 2px 10px;}
+  .cal-daynav .dn-btn{width:34px; height:34px; border-radius:50%; background:var(--bg-panel-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-2); font-size:15px;}
+  .cal-daynav .dn-btn.off{opacity:.3; pointer-events:none;}
+  .cal-daynav .dn-lbl{font-size:14.5px; font-weight:700; text-align:center;}
+  .cal-daynav .dn-sub{font-size:11px; color:var(--text-3); text-align:center; margin-top:1px;}
+  .cal-big{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .cal-big .of{font-size:13px; color:var(--text-3);}
+  .cal-goal-chip{font-size:11.5px; padding:4px 10px; border-radius:20px; border:1px solid var(--gold-dim); color:var(--gold); cursor:pointer; background:rgba(212,168,87,.08);}
+  .macro-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; padding-top:12px; border-top:1px dashed var(--line);}
+  .macro-cell{text-align:center;}
+  .macro-cell .ml{font-size:11px; color:var(--text-2); margin-bottom:3px;}
+  .macro-cell .mv{font-size:16px; font-weight:700;}
+  .macro-cell .mp{font-size:10.5px; color:var(--text-3); margin-top:2px;}
+  .macro-cell .cl-track{height:5px; margin-top:6px;}
+  .food-row{display:flex; align-items:center; gap:10px; padding:10px 2px; border-bottom:1px dashed var(--line);}
+  .food-row:last-child{border-bottom:none;}
+  .food-row.pick{cursor:pointer;}
+  .food-row.pick:active{background:var(--bg-raised);}
+  .food-row .ic{font-size:20px; width:26px; text-align:center; flex:0 0 auto;}
+  .food-info{flex:1; min-width:0;}
+  .food-name{font-size:13.5px; color:var(--text-1); display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .food-name .q{font-size:11px; color:var(--text-3);}
+  .food-macros{font-size:10.5px; color:var(--text-3); margin-top:2px;}
+  .food-kcal{font-size:14px; font-weight:700; color:var(--gold); white-space:nowrap;}
+  .food-kcal small{font-size:10px; color:var(--text-3); font-weight:400;}
+  .food-tag{font-size:9.5px; color:var(--gold); border:1px solid var(--gold-dim); border-radius:20px; padding:0 6px;}
+  .food-act{color:var(--text-3); font-size:14px; padding:4px 6px; cursor:pointer;}
+  .food-list-wrap{max-height:46vh; overflow-y:auto; margin:0 -2px 10px; padding:0 2px;}
+  .qty-chips{display:flex; gap:7px; flex-wrap:wrap; margin:-2px 0 12px;}
+  .qty-chip{font-size:12.5px; padding:6px 12px; border-radius:20px; border:1px solid var(--line); background:var(--bg-panel-2); color:var(--text-2); cursor:pointer;}
+  .qty-chip:active{transform:scale(.95);}
+  .qty-preview{background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-md); padding:14px; margin-bottom:12px; text-align:center;}
+  .qty-preview .k{font-size:30px; font-weight:700; color:var(--gold);}
+  .qty-preview .m{font-size:12.5px; color:var(--text-2); margin-top:4px;}
+  .seg{display:flex; gap:6px; margin-bottom:10px;}
+  .seg .opt{flex:1; text-align:center; padding:10px 4px; border-radius:9px; border:1px solid var(--line); background:var(--bg-panel-2); color:var(--text-2); font-size:13px; cursor:pointer;}
+  .seg .opt.sel{border-color:var(--gold); color:var(--gold); background:var(--bg-raised);}
+  .fld-row{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .fld-hint{font-size:11px; color:var(--text-3); margin:-4px 2px 10px; line-height:1.5;}
+
   /* bottom navigation */
   .bottomnav{
     position:fixed; bottom:0; left:50%; transform:translateX(-50%);
@@ -377,11 +418,11 @@
     gap:2px;
   }
   .navbtn{
-    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-    padding:6px 2px; border-radius:12px; cursor:pointer; color:var(--text-3); user-select:none;
+    flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 0; border-radius:12px; cursor:pointer; color:var(--text-3); user-select:none;
   }
   .navbtn .nic{font-size:19px; line-height:1;}
-  .navbtn .nlb{font-size:10px;}
+  .navbtn .nlb{font-size:9.5px; white-space:nowrap;}
   .navbtn.active{color:var(--gold); background:var(--bg-panel-2);}
   .navbtn:active{transform:scale(.94);}
 </style>
@@ -468,37 +509,60 @@
     </div>
   </div>
 
-  <!-- RESTRAINT (TEMPTATION SAVINGS) SCREEN -->
-  <div class="screen" id="screen-restraint">
+  <!-- CALORIES SCREEN -->
+  <div class="screen" id="screen-calories">
     <div class="screen-scroll">
-      <div class="sec-card">
-        <div class="sec-h">إجمالي ما وفرته منذ البداية</div>
-        <div class="big-num mono gold" id="restraintTotal">٠ ر.س</div>
+      <div class="cal-daynav">
+        <div class="dn-btn" id="calPrevDay">→</div>
+        <div>
+          <div class="dn-lbl" id="calDayLabel">اليوم</div>
+          <div class="dn-sub" id="calDaySub"></div>
+        </div>
+        <div class="dn-btn" id="calNextDay">←</div>
       </div>
+
       <div class="sec-card">
         <div class="sec-h" style="display:flex; justify-content:space-between; align-items:center;">
-          <span>توفير هذا الشهر</span>
-          <span id="restraintMonthLabel" style="color:var(--text-3); font-size:11.5px;"></span>
+          <span>🔥 السعرات</span>
+          <span class="cal-goal-chip" id="btnCalGoal">🎯 الهدف</span>
         </div>
-        <div class="big-num mono" id="restraintMonthTotal">٠ ر.س</div>
+        <div class="cal-big">
+          <span class="big-num mono gold" id="calTotal">0</span>
+          <span class="of" id="calOfGoal">سعرة</span>
+        </div>
+        <div id="calGoalWrap" style="display:none;">
+          <div class="bar-track"><div class="bar-fill" id="calBarFill" style="width:0%"></div></div>
+          <div class="remaining-sub" id="calRemaining"></div>
+        </div>
+        <div class="macro-grid">
+          <div class="macro-cell">
+            <div class="ml">بروتين</div>
+            <div class="mv mono" id="calP">0g</div>
+            <div class="mp" id="calPpct"></div>
+            <div class="cl-track"><div class="cl-fill" id="calPbar" style="width:0%; background:#6FA8C9;"></div></div>
+          </div>
+          <div class="macro-cell">
+            <div class="ml">كارب</div>
+            <div class="mv mono" id="calC">0g</div>
+            <div class="mp" id="calCpct"></div>
+            <div class="cl-track"><div class="cl-fill" id="calCbar" style="width:0%; background:#E3C567;"></div></div>
+          </div>
+          <div class="macro-cell">
+            <div class="ml">دهون</div>
+            <div class="mv mono" id="calF">0g</div>
+            <div class="mp" id="calFpct"></div>
+            <div class="cl-track"><div class="cl-fill" id="calFbar" style="width:0%; background:#C97B4A;"></div></div>
+          </div>
+        </div>
       </div>
 
-      <div class="amount-row">
-        <span class="amt placeholder" id="restraintAmtDisplay">كم كنت ستصرف؟</span>
-        <span class="mode-pill budget">توفير</span>
+      <div class="screen-title" style="justify-content:space-between;">
+        <span>🍽️ أكل اليوم</span>
+        <span class="btn primary" id="btnAddFood" style="flex:0 0 auto; padding:8px 14px; font-size:13px;">+ أكل</span>
       </div>
-      <div class="keypad">
-        <div class="key" data-rk="7">٧</div><div class="key" data-rk="8">٨</div><div class="key" data-rk="9">٩</div>
-        <div class="key" data-rk="4">٤</div><div class="key" data-rk="5">٥</div><div class="key" data-rk="6">٦</div>
-        <div class="key" data-rk="1">١</div><div class="key" data-rk="2">٢</div><div class="key" data-rk="3">٣</div>
-        <div class="key func" data-rk=".">٫</div><div class="key" data-rk="0">٠</div><div class="key func" data-rk="back">⌫</div>
+      <div class="sec-card" style="padding:6px 14px;">
+        <div id="calLogList"></div>
       </div>
-      <div class="cats-hint" id="restraintCatsHint">أدخل المبلغ بالأعلى ثم اختر عن ماذا تراجعت لتسجيله كتوفير</div>
-      <div class="cats-title" id="restraintCatsTitle" style="display:none;">اختر عن ماذا تراجعت</div>
-      <div class="cat-grid" id="restraintTagGrid" style="display:none;"></div>
-
-      <div class="screen-title" style="margin-top:16px;">آخر قرارات التوفير</div>
-      <div id="restraintList"></div>
     </div>
   </div>
 
@@ -546,7 +610,7 @@
   <div class="navbtn active" data-screen="calc"><span class="nic">🧮</span><span class="nlb">الرئيسية</span></div>
   <div class="navbtn" data-screen="history"><span class="nic">🧾</span><span class="nlb">السجل</span></div>
   <div class="navbtn" data-screen="savings"><span class="nic">💰</span><span class="nlb">الإدخار</span></div>
-  <div class="navbtn" data-screen="restraint"><span class="nic">🙅</span><span class="nlb">التوفير</span></div>
+  <div class="navbtn" data-screen="calories"><span class="nic">🥗</span><span class="nlb">السعرات</span></div>
   <div class="navbtn" data-screen="commitments"><span class="nic">💳</span><span class="nlb">الالتزامات</span></div>
   <div class="navbtn" data-screen="financial"><span class="nic">📊</span><span class="nlb">الوضع المالي</span></div>
 </div>
@@ -702,6 +766,93 @@
   </div>
 </div>
 
+<!-- FOOD PICKER + QUANTITY SHEET -->
+<div class="overlay" id="foodPickOverlay">
+  <div class="sheet">
+    <div id="foodPickStep">
+      <h3>اختر الأكل</h3>
+      <input type="text" id="foodSearchInput" class="field" placeholder="ابحث: دجاج، رز، تونة...">
+      <div class="food-list-wrap" id="foodPickList"></div>
+      <div class="budget-actions">
+        <div class="btn" id="btnNewFood">+ صنف جديد غير موجود بالقائمة</div>
+      </div>
+    </div>
+    <div id="foodQtyStep" style="display:none;">
+      <h3 id="foodQtyTitle">الكمية</h3>
+      <div class="fld-hint" id="foodQtyBasis"></div>
+      <label class="fld-l" id="foodQtyLabel">الوزن (جرام)</label>
+      <input type="text" inputmode="decimal" id="foodQtyInput" class="field mono" placeholder="0" style="text-align:right;">
+      <div class="qty-chips" id="foodQtyChips"></div>
+      <div class="qty-preview">
+        <div class="k"><span class="mono" id="foodQtyKcal">0</span> <span style="font-size:14px; color:var(--text-2); font-weight:400;">سعرة</span></div>
+        <div class="m" id="foodQtyMacros"></div>
+      </div>
+      <div class="budget-actions">
+        <div class="btn ghost" id="btnFoodQtyBack" style="flex:0 0 30%;">رجوع</div>
+        <div class="btn primary" id="btnFoodQtyConfirm">إضافة</div>
+      </div>
+    </div>
+    <div class="close-sheet" id="closeFoodPick">إغلاق</div>
+  </div>
+</div>
+
+<!-- CUSTOM FOOD ADD / EDIT SHEET -->
+<div class="overlay" id="foodEditOverlay">
+  <div class="sheet">
+    <h3 id="foodEditTitle">صنف جديد</h3>
+    <label class="fld-l">اسم الصنف</label>
+    <input type="text" id="foodNameInput" class="field" placeholder="مثال: خبز التنور">
+    <div class="icon-pick-title" style="margin-top:0;">اختر أيقونة</div>
+    <div class="icon-pick-grid" id="foodIconGrid"></div>
+    <label class="fld-l">القيم الغذائية محسوبة على</label>
+    <div class="seg" id="foodBasisSeg">
+      <div class="opt sel" data-basis="100g">كل 100 جرام</div>
+      <div class="opt" data-basis="piece">الحبة الواحدة</div>
+    </div>
+    <div class="fld-row">
+      <div>
+        <label class="fld-l">بروتين (جرام)</label>
+        <input type="text" inputmode="decimal" id="foodPInput" class="field" placeholder="0">
+      </div>
+      <div>
+        <label class="fld-l">كارب (جرام)</label>
+        <input type="text" inputmode="decimal" id="foodCInput" class="field" placeholder="0">
+      </div>
+      <div>
+        <label class="fld-l">دهون (جرام)</label>
+        <input type="text" inputmode="decimal" id="foodFInput" class="field" placeholder="0">
+      </div>
+      <div>
+        <label class="fld-l">السعرات</label>
+        <input type="text" inputmode="decimal" id="foodKcalInput" class="field" placeholder="تلقائي">
+      </div>
+    </div>
+    <div class="fld-hint">إذا تركت السعرات فارغة تُحسب تلقائيًا من الماكروز (بروتين وكارب ×٤، دهون ×٩). القيم موجودة عادة على ملصق المنتج.</div>
+    <div class="budget-actions">
+      <div class="btn primary" id="btnFoodEditConfirm">حفظ الصنف</div>
+    </div>
+    <div class="budget-actions" id="foodDeleteWrap" style="margin-top:10px; display:none;">
+      <div class="btn danger" id="btnFoodDelete">حذف هذا الصنف</div>
+    </div>
+    <div class="close-sheet" id="closeFoodEdit">إلغاء</div>
+  </div>
+</div>
+
+<!-- CALORIE GOAL SHEET -->
+<div class="overlay" id="calGoalOverlay">
+  <div class="sheet">
+    <h3>هدفك اليومي</h3>
+    <label class="fld-l">السعرات اليومية (اتركه فارغًا لإلغاء الهدف)</label>
+    <input type="text" inputmode="decimal" id="calGoalKcalInput" class="field" placeholder="مثال: 2000">
+    <label class="fld-l">البروتين اليومي بالجرام (اختياري)</label>
+    <input type="text" inputmode="decimal" id="calGoalPInput" class="field" placeholder="مثال: 150">
+    <div class="budget-actions">
+      <div class="btn primary" id="btnCalGoalConfirm">حفظ</div>
+    </div>
+    <div class="close-sheet" id="closeCalGoal">إلغاء</div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -726,22 +877,57 @@
   // Virtual category for commitment payments (shown in history/breakdown, not selectable).
   const COMMIT_CAT = {id:'__commit', label:'الالتزامات', icon:'💳', color:'#C88A4A'};
 
-  // quick-tap "reasons" for the restraint (temptation savings) tab — mirrors the
-  // expense category grid on the home screen, but for what you decided NOT to buy.
-  const RESTRAINT_TAGS = [
-    {id:'coffee',    label:'قهوة ومقاهي',      icon:'☕'},
-    {id:'eatout',    label:'أكل خارجي',        icon:'🍔'},
-    {id:'clothes',   label:'ملابس',            icon:'👗'},
-    {id:'online',    label:'تسوق أونلاين',      icon:'🛍️'},
-    {id:'gadgets',   label:'إلكترونيات',        icon:'📱'},
-    {id:'fun',       label:'ألعاب وترفيه',      icon:'🎮'},
-    {id:'trip',      label:'رحلة أو سفر',       icon:'✈️'},
-    {id:'home',      label:'كماليات المنزل',    icon:'🏠'},
-    {id:'subs',      label:'اشتراكات',          icon:'📺'},
-    {id:'gifts',     label:'هدايا',            icon:'🎁'},
-    {id:'car',       label:'إكسسوارات السيارة', icon:'🚗'},
-    {id:'other',     label:'أخرى',             icon:'🏷️'},
+  // built-in foods for the calories tab. Values are approximate (USDA-style averages)
+  // per 100 g of the food in the state it's usually weighed (cooked unless noted),
+  // or per piece when per === 'piece'. User-added foods live in DB.nutrition.customFoods.
+  const BUILTIN_FOODS = [
+    {id:'f_chicken_breast', name:'صدر دجاج مطبوخ',          icon:'🍗', per:'100g', kcal:165, p:31,   c:0,    f:3.6},
+    {id:'f_chicken_raw',    name:'صدر دجاج نيء',            icon:'🍗', per:'100g', kcal:120, p:22.5, c:0,    f:2.6},
+    {id:'f_chicken_thigh',  name:'فخذ دجاج مطبوخ بدون جلد',  icon:'🍗', per:'100g', kcal:179, p:25,   c:0,    f:8.2},
+    {id:'f_rice_cooked',    name:'رز أبيض مطبوخ',           icon:'🍚', per:'100g', kcal:130, p:2.7,  c:28,   f:0.3},
+    {id:'f_rice_raw',       name:'رز أبيض نيء',             icon:'🍚', per:'100g', kcal:360, p:7,    c:79,   f:0.7},
+    {id:'f_tuna_water',     name:'تونة بالماء (مصفاة)',      icon:'🐟', per:'100g', kcal:116, p:26,   c:0,    f:0.8},
+    {id:'f_tuna_oil',       name:'تونة بالزيت (مصفاة)',      icon:'🐟', per:'100g', kcal:198, p:29,   c:0,    f:8.2},
+    {id:'f_salmon',         name:'سلمون',                   icon:'🍣', per:'100g', kcal:208, p:20,   c:0,    f:13},
+    {id:'f_white_fish',     name:'سمك أبيض مطبوخ (هامور/بلطي)', icon:'🐠', per:'100g', kcal:128, p:26, c:0, f:2.7},
+    {id:'f_shrimp',         name:'روبيان مطبوخ',            icon:'🦐', per:'100g', kcal:99,  p:24,   c:0.2,  f:0.3},
+    {id:'f_egg',            name:'بيض (حبة كبيرة)',          icon:'🥚', per:'piece', kcal:72, p:6.3,  c:0.4,  f:4.8},
+    {id:'f_egg_white',      name:'بياض بيض',                icon:'🥚', per:'100g', kcal:52,  p:11,   c:0.7,  f:0.2},
+    {id:'f_olive_oil',      name:'زيت زيتون',               icon:'🫒', per:'100g', kcal:884, p:0,    c:0,    f:100},
+    {id:'f_butter',         name:'زبدة',                    icon:'🧈', per:'100g', kcal:717, p:0.9,  c:0.1,  f:81},
+    {id:'f_beef',           name:'لحم بقر مفروم مطبوخ',     icon:'🥩', per:'100g', kcal:250, p:26,   c:0,    f:15},
+    {id:'f_lamb',           name:'لحم غنم مطبوخ',           icon:'🍖', per:'100g', kcal:294, p:25,   c:0,    f:21},
+    {id:'f_oats',           name:'شوفان',                   icon:'🥣', per:'100g', kcal:389, p:16.9, c:66,   f:6.9},
+    {id:'f_bread_brown',    name:'خبز بر (أسمر)',           icon:'🍞', per:'100g', kcal:247, p:13,   c:41,   f:3.4},
+    {id:'f_bread_white',    name:'خبز أبيض',                icon:'🫓', per:'100g', kcal:275, p:9,    c:55.7, f:1.2},
+    {id:'f_pasta',          name:'معكرونة مطبوخة',          icon:'🍝', per:'100g', kcal:158, p:5.8,  c:31,   f:0.9},
+    {id:'f_potato',         name:'بطاطس مسلوقة',            icon:'🥔', per:'100g', kcal:87,  p:1.9,  c:20,   f:0.1},
+    {id:'f_sweet_potato',   name:'بطاطا حلوة مطبوخة',       icon:'🍠', per:'100g', kcal:90,  p:2,    c:20.7, f:0.2},
+    {id:'f_lentils',        name:'عدس مطبوخ',               icon:'🥣', per:'100g', kcal:116, p:9,    c:20,   f:0.4},
+    {id:'f_chickpeas',      name:'حمص حب مطبوخ',            icon:'🫘', per:'100g', kcal:164, p:8.9,  c:27,   f:2.6},
+    {id:'f_foul',           name:'فول مدمس',                icon:'🫘', per:'100g', kcal:110, p:7.6,  c:19.6, f:0.4},
+    {id:'f_greek_yogurt',   name:'زبادي يوناني قليل الدسم',  icon:'🥛', per:'100g', kcal:73,  p:10,   c:3.9,  f:1.9},
+    {id:'f_yogurt',         name:'زبادي كامل الدسم',        icon:'🥛', per:'100g', kcal:61,  p:3.5,  c:4.7,  f:3.3},
+    {id:'f_milk_full',      name:'حليب كامل الدسم',         icon:'🥛', per:'100g', kcal:61,  p:3.2,  c:4.8,  f:3.3},
+    {id:'f_milk_low',       name:'حليب قليل الدسم',         icon:'🥛', per:'100g', kcal:46,  p:3.4,  c:5,    f:1.5},
+    {id:'f_cottage',        name:'جبن قريش',                icon:'🧀', per:'100g', kcal:98,  p:11,   c:3.4,  f:4.3},
+    {id:'f_feta',           name:'جبنة فيتا',               icon:'🧀', per:'100g', kcal:264, p:14,   c:4,    f:21},
+    {id:'f_whey',           name:'بروتين واي (بودرة)',       icon:'💪', per:'100g', kcal:400, p:80,   c:8,    f:6},
+    {id:'f_almonds',        name:'لوز',                     icon:'🌰', per:'100g', kcal:579, p:21,   c:22,   f:50},
+    {id:'f_peanut_butter',  name:'زبدة فول سوداني',         icon:'🥜', per:'100g', kcal:588, p:25,   c:20,   f:50},
+    {id:'f_avocado',        name:'أفوكادو',                 icon:'🥑', per:'100g', kcal:160, p:2,    c:8.5,  f:14.7},
+    {id:'f_dates',          name:'تمر',                     icon:'🌴', per:'100g', kcal:282, p:2.5,  c:75,   f:0.4},
+    {id:'f_banana',         name:'موز',                     icon:'🍌', per:'100g', kcal:89,  p:1.1,  c:23,   f:0.3},
+    {id:'f_apple',          name:'تفاح',                    icon:'🍎', per:'100g', kcal:52,  p:0.3,  c:14,   f:0.2},
+    {id:'f_cucumber',       name:'خيار',                    icon:'🥒', per:'100g', kcal:15,  p:0.7,  c:3.6,  f:0.1},
+    {id:'f_tomato',         name:'طماطم',                   icon:'🍅', per:'100g', kcal:18,  p:0.9,  c:3.9,  f:0.2},
+    {id:'f_salad',          name:'خس / سلطة خضراء',         icon:'🥬', per:'100g', kcal:15,  p:1.4,  c:2.9,  f:0.2},
+    {id:'f_broccoli',       name:'بروكلي',                  icon:'🥦', per:'100g', kcal:34,  p:2.8,  c:7,    f:0.4},
+    {id:'f_honey',          name:'عسل',                     icon:'🍯', per:'100g', kcal:304, p:0.3,  c:82,   f:0},
+    {id:'f_sugar',          name:'سكر',                     icon:'🧂', per:'100g', kcal:387, p:0,    c:100,  f:0},
   ];
+  const FOOD_ICONS = ['🍽️','🍗','🥩','🐟','🍚','🍞','🥗','🥚','🧀','🥛','🍝','🥔','🍌','🍎','🥜','🍫','🍪','☕','🥤','🍕','🍔','🌯','🥙','💪'];
+  const MACRO_COLORS = {p:'#6FA8C9', c:'#E3C567', f:'#C97B4A'};
 
   const AR_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   const STORE_KEY = 'expense-tracker-data';
@@ -768,11 +954,10 @@
   // categories treated as fixed monthly bills by default
   const DEFAULT_BILLS = ['power','net','education'];
 
-  let DB = { cycles: {}, currentCycleKey:null, savings:{opening:0, entries:[]}, commitments:[], customCategories: [], settings: { theme:'dark' }, hiddenDefaults: [], billCategories: DEFAULT_BILLS.slice(), restraint:{entries:[]} };
+  let DB = { cycles: {}, currentCycleKey:null, savings:{opening:0, entries:[]}, commitments:[], customCategories: [], settings: { theme:'dark' }, hiddenDefaults: [], billCategories: DEFAULT_BILLS.slice(), restraint:{entries:[]}, nutrition:makeEmptyNutrition() };
   let currentCycle = null; // {start,end,key}  (derived)
   let viewCycleKey = null;  // when set, we render a past cycle read-only
   let expenseAmount = '';
-  let restraintAmount = '';
   let budgetAmount = '';
   let budgetMode = 'start'; // 'start' | 'newsalary' | 'edit'
   let activeScreen = 'calc';
@@ -786,6 +971,12 @@
   let activeJarId = null;     // jar being deposited/withdrawn/edited
   let jarEditId = null;       // null => adding a new jar
   let selectedJarIcon = JAR_ICONS[0];
+  let calDayOffset = 0;       // 0 = today, -1 = yesterday, ...
+  let activeFoodId = null;    // food selected in the picker's quantity step
+  let foodEditId = null;      // null => adding a new custom food
+  let foodEditFromPicker = false;
+  let selectedFoodIcon = FOOD_ICONS[0];
+  let selectedFoodBasis = '100g';
 
   function getAllCategories(){
     const hidden = DB.hiddenDefaults || [];
@@ -896,6 +1087,7 @@
     if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
     if(!DB.restraint || typeof DB.restraint !== 'object') DB.restraint = {entries:[]};
     if(!Array.isArray(DB.restraint.entries)) DB.restraint.entries = [];
+    migrateNutrition();
     // one-time migration: car is no longer a fixed monthly bill by default,
     // and the new "children's education" bill category is added for existing users
     if(!DB.migratedFixedBillsV2){
@@ -1471,129 +1663,335 @@
     toast('تم حذف الوعاء');
   }
 
-  // ---------- restraint (temptation savings) ----------
-  // a purely motivational log: every time the user decides NOT to buy something,
-  // they log what it would have cost as a "win". Fully separate from the expense
-  // budget/history — logging an entry here never touches DB.cycles.
-  function restraintMonthKey(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1); }
-  function restraintTotalAll(){
-    return (DB.restraint.entries||[]).reduce((s,e)=>s+(e.amount||0),0);
+  // ---------- calories / nutrition ----------
+  // a daily food log, fully separate from the money side of the app. Each log entry
+  // snapshots its computed kcal/macros, so editing a custom food later never rewrites
+  // past days.
+  function makeEmptyNutrition(){
+    return { customFoods:[], log:{}, goal:{kcal:0, p:0}, lastQty:{}, lastUsed:{} };
   }
-  function restraintEntriesForMonth(monthKey){
-    return (DB.restraint.entries||[]).filter(e=> restraintMonthKey(new Date(e.ts)) === monthKey);
-  }
-
-  function renderRestraintTotals(){
-    const total = restraintTotalAll();
-    document.getElementById('restraintTotal').textContent = fmtNum(total) + ' ر.س';
-
-    const now = new Date();
-    const monthKey = restraintMonthKey(now);
-    document.getElementById('restraintMonthLabel').textContent = AR_MONTHS[now.getMonth()];
-    const monthEntries = restraintEntriesForMonth(monthKey);
-    const monthTotal = monthEntries.reduce((s,e)=>s+(e.amount||0),0);
-    document.getElementById('restraintMonthTotal').textContent = fmtNum(monthTotal) + ' ر.س';
+  function migrateNutrition(){
+    if(!DB.nutrition || typeof DB.nutrition !== 'object') DB.nutrition = makeEmptyNutrition();
+    const n = DB.nutrition;
+    if(!Array.isArray(n.customFoods)) n.customFoods = [];
+    if(!n.log || typeof n.log !== 'object') n.log = {};
+    if(!n.goal || typeof n.goal !== 'object') n.goal = {kcal:0, p:0};
+    if(!n.lastQty || typeof n.lastQty !== 'object') n.lastQty = {};
+    if(!n.lastUsed || typeof n.lastUsed !== 'object') n.lastUsed = {};
   }
 
-  function renderRestraintList(){
-    const list = document.getElementById('restraintList');
-    const entries = (DB.restraint.entries||[]).slice().sort((a,b)=>b.ts-a.ts);
+  function escHtml(s){
+    return (''+s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function r1(n){ return Math.round((n||0)*10)/10; }
+  // loose Arabic matching for search: drop diacritics/tatweel, unify alef/ta-marbuta/ya forms
+  function normAr(s){
+    return (''+s).toLowerCase()
+      .replace(/[ً-ْـ]/g,'')
+      .replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+  }
+
+  function allFoods(){ return DB.nutrition.customFoods.concat(BUILTIN_FOODS); }
+  function findFood(id){ return allFoods().find(f=>f.id===id) || null; }
+  function foodFactor(food, qty){ return food.per === 'piece' ? qty : qty/100; }
+  function foodBasisText(food){ return food.per === 'piece' ? 'للحبة' : 'لكل 100غ'; }
+  function qtyText(food, qty){ return food.per === 'piece' ? (fmtNum(qty) + ' حبة') : (fmtNum(qty) + ' غ'); }
+  function macroLine(p,c,f){ return 'بروتين ' + fmtNum(r1(p)) + 'غ · كارب ' + fmtNum(r1(c)) + 'غ · دهون ' + fmtNum(r1(f)) + 'غ'; }
+
+  function calDayDate(){
+    const d = new Date();
+    d.setHours(12,0,0,0);
+    d.setDate(d.getDate() + calDayOffset);
+    return d;
+  }
+  function calDayEntries(){ return DB.nutrition.log[dateKey(calDayDate())] || []; }
+
+  function renderCalories(){
+    const d = calDayDate();
+    const lbl = calDayOffset === 0 ? 'اليوم' : (calDayOffset === -1 ? 'أمس' : formatGregorian(d));
+    document.getElementById('calDayLabel').textContent = lbl;
+    document.getElementById('calDaySub').textContent = calDayOffset >= -1 ? formatGregorian(d) : formatHijri(d);
+    document.getElementById('calNextDay').classList.toggle('off', calDayOffset >= 0);
+
+    const entries = calDayEntries();
+    const tot = entries.reduce((s,e)=>({kcal:s.kcal+e.kcal, p:s.p+e.p, c:s.c+e.c, f:s.f+e.f}), {kcal:0,p:0,c:0,f:0});
+    const goal = DB.nutrition.goal || {};
+    document.getElementById('calTotal').textContent = fmtNum(Math.round(tot.kcal));
+    const goalWrap = document.getElementById('calGoalWrap');
+    if(goal.kcal > 0){
+      document.getElementById('calOfGoal').textContent = '/ ' + fmtNum(goal.kcal) + ' سعرة';
+      goalWrap.style.display = 'block';
+      const pct = Math.min(100, tot.kcal / goal.kcal * 100);
+      const fill = document.getElementById('calBarFill');
+      fill.style.width = pct + '%';
+      const left = goal.kcal - tot.kcal;
+      fill.classList.toggle('over', left < 0);
+      document.getElementById('calRemaining').textContent = left >= 0
+        ? ('متبقي ' + fmtNum(Math.round(left)) + ' سعرة')
+        : ('تجاوزت الهدف بـ ' + fmtNum(Math.round(-left)) + ' سعرة');
+    } else {
+      document.getElementById('calOfGoal').textContent = 'سعرة';
+      goalWrap.style.display = 'none';
+    }
+
+    // macro cells: grams, share of calories, and bar (vs protein goal when set, else share)
+    const macroKcal = tot.p*4 + tot.c*4 + tot.f*9;
+    [['p',4],['c',4],['f',9]].forEach(([k,mult])=>{
+      const U = k.toUpperCase();
+      const share = macroKcal > 0 ? (tot[k]*mult / macroKcal * 100) : 0;
+      document.getElementById('cal'+U).textContent = fmtNum(r1(tot[k])) + 'g';
+      let sub = macroKcal > 0 ? (Math.round(share) + '٪ من السعرات') : '—';
+      let bar = share;
+      if(k === 'p' && goal.p > 0){
+        sub = 'من ' + fmtNum(goal.p) + 'g';
+        bar = Math.min(100, tot.p / goal.p * 100);
+      }
+      document.getElementById('cal'+U+'pct').textContent = sub;
+      document.getElementById('cal'+U+'bar').style.width = bar + '%';
+    });
+
+    const list = document.getElementById('calLogList');
     if(!entries.length){
-      list.innerHTML = '<div class="empty-note">لا توجد قرارات توفير مسجلة بعد. كل مرة تتراجع فيها عن شراء شيء، سجلها هنا.</div>';
+      list.innerHTML = '<div class="empty-note">ما سجلت أكل ' + (calDayOffset===0 ? 'اليوم' : 'في هذا اليوم') + '. اضغط «+ أكل» واختر الصنف ثم اكتب الوزن.</div>';
       return;
     }
-    list.innerHTML = entries.map(e=>{
-      const tag = findRestraintTag(e.tagId);
-      const label = tag ? (tag.icon + ' ' + tag.label) : 'قرار توفير';
-      const d = new Date(e.ts);
-      const dateStr = formatGregorian(d) + ' • ' + formatTimeOnly(d);
-      return `<div class="entry-row">
-        <div class="entry-info"><div class="entry-note">${label}</div><div class="entry-date">${dateStr}</div></div>
-        <span class="entry-amt pos mono">+${fmtNum(e.amount)}</span>
-        <span class="entry-del" data-restraintdel="${e.id}">✕</span>
+    list.innerHTML = entries.slice().sort((a,b)=>a.ts-b.ts).map(e=>{
+      return `<div class="food-row">
+        <span class="ic">${escHtml(e.icon||'🍽️')}</span>
+        <div class="food-info">
+          <div class="food-name">${escHtml(e.name)} <span class="q">${e.per==='piece' ? fmtNum(e.qty)+' حبة' : fmtNum(e.qty)+' غ'}</span></div>
+          <div class="food-macros">${macroLine(e.p,e.c,e.f)} · ${formatTimeOnly(new Date(e.ts))}</div>
+        </div>
+        <span class="food-kcal mono">${fmtNum(Math.round(e.kcal))} <small>سعرة</small></span>
+        <span class="food-act" data-caldel="${e.id}">✕</span>
       </div>`;
     }).join('');
-    list.querySelectorAll('[data-restraintdel]').forEach(btn=>{
-      btn.addEventListener('click', ()=> deleteRestraintEntry(btn.dataset.restraintdel));
+    list.querySelectorAll('[data-caldel]').forEach(btn=>{
+      btn.addEventListener('click', ()=> deleteCalEntry(btn.dataset.caldel));
     });
   }
 
-  function renderRestraint(){
-    renderRestraintTotals();
-    renderRestraintList();
+  function shiftCalDay(delta){
+    calDayOffset = Math.min(0, calDayOffset + delta);
+    renderCalories();
   }
 
-  function findRestraintTag(id){ return RESTRAINT_TAGS.find(t=>t.id===id) || null; }
+  async function deleteCalEntry(id){
+    if(!confirm('حذف هذا الصنف من سجل اليوم؟')) return;
+    const key = dateKey(calDayDate());
+    DB.nutrition.log[key] = (DB.nutrition.log[key]||[]).filter(e=>e.id!==id);
+    if(!DB.nutrition.log[key].length) delete DB.nutrition.log[key];
+    await saveData();
+    renderCalories();
+  }
 
-  function renderRestraintAmountDisplay(){
-    const el = document.getElementById('restraintAmtDisplay');
-    if(restraintAmount === ''){
-      el.textContent = 'كم كنت ستصرف؟';
-      el.classList.add('placeholder');
-    } else {
-      el.textContent = '+ ' + restraintAmount + ' ر.س';
-      el.classList.remove('placeholder');
+  // ----- food picker -----
+  function openFoodPicker(){
+    document.getElementById('foodSearchInput').value = '';
+    showFoodPickStep();
+    document.getElementById('foodPickOverlay').classList.add('show');
+  }
+  function closeFoodPicker(){ document.getElementById('foodPickOverlay').classList.remove('show'); }
+
+  function showFoodPickStep(){
+    activeFoodId = null;
+    document.getElementById('foodPickStep').style.display = 'block';
+    document.getElementById('foodQtyStep').style.display = 'none';
+    renderFoodPickList();
+  }
+
+  function renderFoodPickList(){
+    const q = normAr(document.getElementById('foodSearchInput').value.trim());
+    const used = DB.nutrition.lastUsed || {};
+    let foods = allFoods();
+    if(q) foods = foods.filter(f=> normAr(f.name).includes(q));
+    // recently used first, then custom foods, then the built-in order
+    foods = foods.map((f,i)=>({f,i})).sort((a,b)=>{
+      const ua = used[a.f.id]||0, ub = used[b.f.id]||0;
+      if(ua !== ub) return ub - ua;
+      return a.i - b.i;
+    }).map(x=>x.f);
+
+    const list = document.getElementById('foodPickList');
+    if(!foods.length){
+      list.innerHTML = '<div class="empty-note" style="padding:20px 10px;">ما لقيت «' + escHtml(document.getElementById('foodSearchInput').value.trim()) + '». أضفه كصنف جديد من الزر بالأسفل.</div>';
+      return;
     }
-    updateRestraintTagGridState();
+    list.innerHTML = foods.map(f=>`<div class="food-row pick" data-foodpick="${f.id}">
+        <span class="ic">${escHtml(f.icon||'🍽️')}</span>
+        <div class="food-info">
+          <div class="food-name">${escHtml(f.name)} ${f.custom ? '<span class="food-tag">صنفي</span>' : ''}</div>
+          <div class="food-macros">${macroLine(f.p,f.c,f.f)}</div>
+        </div>
+        <span class="food-kcal mono">${fmtNum(f.kcal)} <small>${foodBasisText(f)}</small></span>
+        ${f.custom ? `<span class="food-act" data-foodedit="${f.id}">✎</span>` : ''}
+      </div>`).join('');
+    list.querySelectorAll('[data-foodpick]').forEach(row=>{
+      row.addEventListener('click', ()=> showFoodQtyStep(row.dataset.foodpick));
+    });
+    list.querySelectorAll('[data-foodedit]').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        closeFoodPicker();
+        openFoodEdit(btn.dataset.foodedit, true);
+      });
+    });
   }
 
-  function renderRestraintTagGrid(){
-    const grid = document.getElementById('restraintTagGrid');
+  function showFoodQtyStep(foodId){
+    const food = findFood(foodId);
+    if(!food) return;
+    activeFoodId = foodId;
+    document.getElementById('foodPickStep').style.display = 'none';
+    document.getElementById('foodQtyStep').style.display = 'block';
+    document.getElementById('foodQtyTitle').textContent = (food.icon||'🍽️') + ' ' + food.name;
+    document.getElementById('foodQtyBasis').textContent =
+      fmtNum(food.kcal) + ' سعرة ' + foodBasisText(food) + ' — ' + macroLine(food.p,food.c,food.f);
+    const isPiece = food.per === 'piece';
+    document.getElementById('foodQtyLabel').textContent = isPiece ? 'العدد (حبة)' : 'الوزن (جرام)';
+    const chips = isPiece ? [1,2,3,4] : [50,100,150,200,250];
+    document.getElementById('foodQtyChips').innerHTML = chips.map(v=>`<span class="qty-chip mono" data-qty="${v}">${v}${isPiece?'':'g'}</span>`).join('');
+    document.querySelectorAll('#foodQtyChips [data-qty]').forEach(ch=>{
+      ch.addEventListener('click', ()=>{
+        document.getElementById('foodQtyInput').value = ch.dataset.qty;
+        updateFoodQtyPreview();
+      });
+    });
+    const last = DB.nutrition.lastQty[foodId];
+    const input = document.getElementById('foodQtyInput');
+    input.value = last ? String(last) : '';
+    updateFoodQtyPreview();
+    setTimeout(()=>{ input.focus(); input.select(); }, 50);
+  }
+
+  function updateFoodQtyPreview(){
+    const food = findFood(activeFoodId);
+    if(!food) return;
+    const qty = parseInput('foodQtyInput');
+    const k = foodFactor(food, qty);
+    document.getElementById('foodQtyKcal').textContent = fmtNum(Math.round(food.kcal*k));
+    document.getElementById('foodQtyMacros').textContent = macroLine(food.p*k, food.c*k, food.f*k);
+  }
+
+  async function confirmFoodQty(){
+    const food = findFood(activeFoodId);
+    if(!food) return;
+    const qty = parseInput('foodQtyInput');
+    if(qty <= 0){ toast(food.per==='piece' ? 'أدخل العدد' : 'أدخل الوزن بالجرام'); return; }
+    const k = foodFactor(food, qty);
+    const d = calDayDate();
+    const now = new Date();
+    // logging into a past day keeps the current time-of-day on that date
+    d.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+    const key = dateKey(d);
+    DB.nutrition.log[key] = DB.nutrition.log[key] || [];
+    DB.nutrition.log[key].push({
+      id:'n'+Date.now()+Math.random().toString(36).slice(2,6),
+      foodId:food.id, name:food.name, icon:food.icon, per:food.per, qty,
+      kcal:food.kcal*k, p:food.p*k, c:food.c*k, f:food.f*k, ts:d.getTime()
+    });
+    DB.nutrition.lastQty[food.id] = qty;
+    DB.nutrition.lastUsed[food.id] = Date.now();
+    await saveData();
+    closeFoodPicker();
+    renderCalories();
+    toast('تمت إضافة ' + food.name + ' — ' + fmtNum(Math.round(food.kcal*k)) + ' سعرة');
+  }
+
+  // ----- custom food add / edit -----
+  function renderFoodIconGrid(){
+    const grid = document.getElementById('foodIconGrid');
     grid.innerHTML = '';
-    RESTRAINT_TAGS.forEach(tag=>{
+    FOOD_ICONS.forEach(ic=>{
       const el = document.createElement('div');
-      el.className = 'cat-btn';
-      el.dataset.tag = tag.id;
-      el.innerHTML = `<span class="ic">${tag.icon}</span><span class="lb">${tag.label}</span>`;
-      el.addEventListener('click', ()=> onRestraintTagTap(tag));
+      el.className = 'icon-pick' + (ic === selectedFoodIcon ? ' sel' : '');
+      el.textContent = ic;
+      el.addEventListener('click', ()=>{ selectedFoodIcon = ic; renderFoodIconGrid(); });
       grid.appendChild(el);
     });
-    updateRestraintTagGridState();
+  }
+  function renderFoodBasisSeg(){
+    document.querySelectorAll('#foodBasisSeg .opt').forEach(o=> o.classList.toggle('sel', o.dataset.basis === selectedFoodBasis));
   }
 
-  function updateRestraintTagGridState(){
-    const enabled = restraintAmount !== '' && parseFloat(restraintAmount) > 0;
-    const grid = document.getElementById('restraintTagGrid');
-    const title = document.getElementById('restraintCatsTitle');
-    const hint = document.getElementById('restraintCatsHint');
-    if(grid) grid.style.display = enabled ? 'grid' : 'none';
-    if(title) title.style.display = enabled ? 'block' : 'none';
-    if(hint) hint.style.display = enabled ? 'none' : 'block';
-    grid.querySelectorAll('.cat-btn').forEach(el=>{
-      el.classList.toggle('enabled', enabled);
-    });
+  function openFoodEdit(id, fromPicker){
+    foodEditId = id || null;
+    foodEditFromPicker = !!fromPicker;
+    const food = id ? DB.nutrition.customFoods.find(f=>f.id===id) : null;
+    document.getElementById('foodEditTitle').textContent = food ? 'تعديل الصنف' : 'صنف جديد';
+    const search = document.getElementById('foodSearchInput').value.trim();
+    document.getElementById('foodNameInput').value = food ? food.name : (fromPicker ? search : '');
+    document.getElementById('foodPInput').value = food ? food.p : '';
+    document.getElementById('foodCInput').value = food ? food.c : '';
+    document.getElementById('foodFInput').value = food ? food.f : '';
+    document.getElementById('foodKcalInput').value = food ? food.kcal : '';
+    selectedFoodIcon = food ? (food.icon || FOOD_ICONS[0]) : FOOD_ICONS[0];
+    selectedFoodBasis = food ? food.per : '100g';
+    renderFoodIconGrid();
+    renderFoodBasisSeg();
+    document.getElementById('foodDeleteWrap').style.display = food ? 'flex' : 'none';
+    document.getElementById('foodEditOverlay').classList.add('show');
   }
-
-  function pressRestraintKey(k){
-    if(k === 'back'){
-      restraintAmount = restraintAmount.slice(0,-1);
-    } else if(k === '.'){
-      if(!restraintAmount.includes('.')) restraintAmount += (restraintAmount===''?'0.':'.');
-    } else {
-      if(restraintAmount === '0') restraintAmount = k;
-      else restraintAmount += k;
+  function closeFoodEdit(reopenPicker){
+    document.getElementById('foodEditOverlay').classList.remove('show');
+    if(reopenPicker && foodEditFromPicker){
+      showFoodPickStep();
+      document.getElementById('foodPickOverlay').classList.add('show');
     }
-    renderRestraintAmountDisplay();
   }
 
-  async function onRestraintTagTap(tag){
-    if(restraintAmount === '' || parseFloat(restraintAmount) <= 0) return;
-    const amt = parseFloat(restraintAmount);
-    DB.restraint.entries = DB.restraint.entries || [];
-    DB.restraint.entries.push({ id:'r'+Date.now()+Math.random().toString(36).slice(2,6), amount:amt, tagId:tag.id, ts:Date.now() });
-    restraintAmount = '';
-    renderRestraintAmountDisplay();
+  async function confirmFoodEdit(){
+    const name = document.getElementById('foodNameInput').value.trim();
+    if(!name){ toast('اكتب اسم الصنف'); return; }
+    const p = parseInput('foodPInput'), c = parseInput('foodCInput'), f = parseInput('foodFInput');
+    const kcalRaw = normNum(document.getElementById('foodKcalInput').value);
+    let kcal = parseFloat(kcalRaw);
+    if(!(kcal > 0)) kcal = Math.round(p*4 + c*4 + f*9);
+    if(!(kcal > 0)){ toast('أدخل السعرات أو الماكروز'); return; }
+    let food;
+    if(foodEditId){
+      food = DB.nutrition.customFoods.find(x=>x.id===foodEditId);
+      if(!food) return;
+      Object.assign(food, {name, icon:selectedFoodIcon, per:selectedFoodBasis, kcal, p, c, f});
+    } else {
+      food = { id:'cf'+Date.now()+Math.random().toString(36).slice(2,6), custom:true, name, icon:selectedFoodIcon, per:selectedFoodBasis, kcal, p, c, f };
+      DB.nutrition.customFoods.push(food);
+    }
     await saveData();
-    renderRestraintTotals();
-    renderRestraintList();
-    toast('أحسنت! تم تسجيل ' + fmtNum(amt) + ' ر.س كتوفير — ' + tag.label);
+    document.getElementById('foodEditOverlay').classList.remove('show');
+    toast(foodEditId ? 'تم تعديل الصنف' : 'تم حفظ الصنف — تقدر تستخدمه دائمًا');
+    if(foodEditFromPicker){
+      // jump straight to entering the weight for the food just saved
+      document.getElementById('foodSearchInput').value = '';
+      showFoodQtyStep(food.id);
+      document.getElementById('foodPickOverlay').classList.add('show');
+    }
   }
 
-  async function deleteRestraintEntry(id){
-    if(!confirm('حذف هذا القرار من سجل التوفير؟')) return;
-    DB.restraint.entries = (DB.restraint.entries||[]).filter(e=>e.id!==id);
+  async function deleteCustomFood(){
+    if(!foodEditId) return;
+    if(!confirm('حذف هذا الصنف من القائمة؟ (لن يتأثر ما سجلته سابقًا)')) return;
+    DB.nutrition.customFoods = DB.nutrition.customFoods.filter(f=>f.id!==foodEditId);
+    delete DB.nutrition.lastQty[foodEditId];
+    delete DB.nutrition.lastUsed[foodEditId];
     await saveData();
-    renderRestraint();
+    closeFoodEdit(true);
+    toast('تم حذف الصنف');
+  }
+
+  // ----- goal -----
+  function openCalGoal(){
+    const g = DB.nutrition.goal || {};
+    document.getElementById('calGoalKcalInput').value = g.kcal > 0 ? g.kcal : '';
+    document.getElementById('calGoalPInput').value = g.p > 0 ? g.p : '';
+    document.getElementById('calGoalOverlay').classList.add('show');
+  }
+  async function confirmCalGoal(){
+    DB.nutrition.goal = { kcal: Math.round(parseInput('calGoalKcalInput')), p: Math.round(parseInput('calGoalPInput')) };
+    await saveData();
+    document.getElementById('calGoalOverlay').classList.remove('show');
+    renderCalories();
+    toast('تم حفظ الهدف');
   }
 
   // ---------- commitments screen ----------
@@ -1906,7 +2304,7 @@
     renderHeader();
     renderHistory();
     renderSavings();
-    renderRestraint();
+    renderCalories();
     renderCommitments();
     renderFinancial();
   }
@@ -2243,6 +2641,7 @@
       if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
       if(!DB.restraint || typeof DB.restraint !== 'object') DB.restraint = {entries:[]};
       if(!Array.isArray(DB.restraint.entries)) DB.restraint.entries = [];
+      migrateNutrition();
       Object.keys(DB.cycles).forEach(k=>{
         const c = DB.cycles[k];
         if(c && typeof c.startTs !== 'number'){ const d=new Date(k); c.startTs = isNaN(d.getTime())?0:d.getTime(); }
@@ -2283,8 +2682,6 @@
 
     renderCatGrid();
     renderAmountDisplay();
-    renderRestraintTagGrid();
-    renderRestraintAmountDisplay();
     updateChromeForScreen();
     renderAll();
 
@@ -2300,9 +2697,6 @@
 
     document.querySelectorAll('#screen-calc .key').forEach(k=>{
       k.addEventListener('click', ()=> pressKey(k.dataset.k));
-    });
-    document.querySelectorAll('#screen-restraint .key').forEach(k=>{
-      k.addEventListener('click', ()=> pressRestraintKey(k.dataset.rk));
     });
     document.querySelectorAll('#budgetOverlay .key').forEach(k=>{
       k.addEventListener('click', ()=> pressBudgetKey(k.dataset.bk));
@@ -2361,7 +2755,7 @@
     });
     document.getElementById('rowDanger').addEventListener('click', async ()=>{
       if(confirm('سيتم حذف جميع البيانات المحفوظة نهائيًا (المصاريف والإدخار والالتزامات). متابعة؟')){
-        DB = { cycles:{}, currentCycleKey:null, savings:{jars:makeDefaultJars(0)}, commitments:[], customCategories:[], settings:DB.settings||{theme:'dark'}, hiddenDefaults:[], billCategories:DEFAULT_BILLS.slice(), restraint:{entries:[]} };
+        DB = { cycles:{}, currentCycleKey:null, savings:{jars:makeDefaultJars(0)}, commitments:[], customCategories:[], settings:DB.settings||{theme:'dark'}, hiddenDefaults:[], billCategories:DEFAULT_BILLS.slice(), restraint:{entries:[]}, nutrition:makeEmptyNutrition() };
         viewCycleKey = null;
         await saveData();
         renderCatGrid();
@@ -2393,6 +2787,29 @@
     document.getElementById('btnJarDelete').addEventListener('click', deleteJar);
     document.getElementById('closeJarEdit').addEventListener('click', ()=>{
       document.getElementById('jarEditOverlay').classList.remove('show');
+    });
+
+    // calories
+    document.getElementById('calPrevDay').addEventListener('click', ()=> shiftCalDay(-1));
+    document.getElementById('calNextDay').addEventListener('click', ()=> shiftCalDay(1));
+    document.getElementById('btnAddFood').addEventListener('click', openFoodPicker);
+    document.getElementById('closeFoodPick').addEventListener('click', closeFoodPicker);
+    document.getElementById('foodSearchInput').addEventListener('input', renderFoodPickList);
+    document.getElementById('foodQtyInput').addEventListener('input', updateFoodQtyPreview);
+    document.getElementById('foodQtyInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter') confirmFoodQty(); });
+    document.getElementById('btnFoodQtyBack').addEventListener('click', showFoodPickStep);
+    document.getElementById('btnFoodQtyConfirm').addEventListener('click', confirmFoodQty);
+    document.getElementById('btnNewFood').addEventListener('click', ()=>{ closeFoodPicker(); openFoodEdit(null, true); });
+    document.getElementById('btnFoodEditConfirm').addEventListener('click', confirmFoodEdit);
+    document.getElementById('btnFoodDelete').addEventListener('click', deleteCustomFood);
+    document.getElementById('closeFoodEdit').addEventListener('click', ()=> closeFoodEdit(true));
+    document.querySelectorAll('#foodBasisSeg .opt').forEach(o=>{
+      o.addEventListener('click', ()=>{ selectedFoodBasis = o.dataset.basis; renderFoodBasisSeg(); });
+    });
+    document.getElementById('btnCalGoal').addEventListener('click', openCalGoal);
+    document.getElementById('btnCalGoalConfirm').addEventListener('click', confirmCalGoal);
+    document.getElementById('closeCalGoal').addEventListener('click', ()=>{
+      document.getElementById('calGoalOverlay').classList.remove('show');
     });
 
     // commitments
