@@ -844,6 +844,9 @@
     if(!Array.isArray(DB.commitments)) DB.commitments = [];
     if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
     if(!DB.catLimits || typeof DB.catLimits !== 'object') DB.catLimits = {};
+    // when each limit started: unused budget rolls over only from cycles after that
+    if(!DB.catLimitsSince || typeof DB.catLimitsSince !== 'object') DB.catLimitsSince = {};
+    Object.keys(DB.catLimits).forEach(id=>{ if(!DB.catLimitsSince[id]) DB.catLimitsSince[id] = Date.now(); });
     // commitments get a monthly instalment (auto-deducted each cycle); seed it once from the last payment
     DB.commitments.forEach(c=>{
       if(c.monthly === undefined){
@@ -988,11 +991,29 @@
 
   // ----- per-category monthly limits -----
   function catLimit(id){ const v = (DB.catLimits||{})[id]; return v > 0 ? v : 0; }
+  // whatever is left of a category's allowance at the end of a cycle rolls over and
+  // raises the next cycle's limit (overspending does not reduce it)
+  function limitCarry(id, key){
+    const base = catLimit(id);
+    if(!base) return 0;
+    const startKey = cycleKeyForTs(DB.catLimitsSince[id] || Date.now());
+    const ks = orderedKeys();
+    let carry = 0, started = false;
+    for(const k of ks){
+      if(k === startKey) started = true;
+      if(k === key) return started ? carry : 0;
+      if(started) carry = Math.max(0, base + carry - catSpendInCycle(k, id));
+    }
+    return 0;
+  }
   function limitStatus(id, key){
-    const limit = catLimit(id);
-    if(!limit) return null;
-    const spent = catSpendInCycle(key || DB.currentCycleKey, id);
-    return { limit, spent, left: limit - spent, pct: spent/limit*100 };
+    const base = catLimit(id);
+    if(!base) return null;
+    key = key || DB.currentCycleKey;
+    const carry = limitCarry(id, key);
+    const limit = base + carry;
+    const spent = catSpendInCycle(key, id);
+    return { base, carry, limit, spent, left: limit - spent, pct: spent/limit*100 };
   }
 
   function getAllCategories(){
@@ -2384,7 +2405,7 @@
       return `<div class="cm-row">
         <span class="ic">${c.icon}</span>
         <span class="lb">${c.label}</span>
-        <span class="cm-bill${catLimit(c.id)?' on':''}" data-limcat="${c.id}">${catLimit(c.id) ? 'حد ' + fmtNum(catLimit(c.id)) : '+ حد'}</span>
+        <span class="cm-bill${catLimit(c.id)?' on':''}" data-limcat="${c.id}">${catLimit(c.id) ? 'حد ' + fmtNum(catLimit(c.id)) + (limitCarry(c.id, DB.currentCycleKey) > 0 ? ' +' + fmtNum(Math.round(limitCarry(c.id, DB.currentCycleKey))) + ' مرحّل' : '') : '+ حد'}</span>
         <span class="cm-bill${bill?' on':''}" data-billcat="${c.id}" title="اعتبارها فاتورة شهرية ثابتة">${bill?'★ فاتورة':'☆ فاتورة'}</span>
         <span class="cm-del" data-delcat="${c.id}">✕</span>
       </div>`;
@@ -2402,7 +2423,10 @@
         const v = prompt('الحد الشهري لـ «' + cat.label + '» بالريال (اتركه فارغًا لإلغاء الحد)', cur || '');
         if(v === null) return;
         const n = parseFloat(normNum(v)) || 0;
-        if(n > 0) DB.catLimits[cat.id] = n; else delete DB.catLimits[cat.id];
+        if(n > 0){
+          DB.catLimits[cat.id] = n;
+          if(!DB.catLimitsSince[cat.id]) DB.catLimitsSince[cat.id] = Date.now();
+        } else { delete DB.catLimits[cat.id]; delete DB.catLimitsSince[cat.id]; }
         await saveData();
         renderCatManageList(); renderCatGrid();
         toast(n > 0 ? 'حد «' + cat.label + '»: ' + fmtNum(n) + ' ر.س لكل دورة' : 'أُلغي الحد');
