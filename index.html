@@ -385,14 +385,6 @@
   .navbtn.active{color:var(--gold); background:var(--bg-panel-2);}
   .navbtn:active{transform:scale(.94);}
   .navbtn .nic{position:relative;}
-  .nbadge{position:absolute; top:-6px; left:-10px; min-width:16px; height:16px; padding:0 4px; border-radius:10px; background:var(--expense); color:#fff; font-size:9.5px; font-weight:700; display:none; align-items:center; justify-content:center; font-family:'Space Mono',monospace;}
-  .nbadge.show{display:flex;}
-
-  /* cycle performance line in the display card */
-  .perf-line{font-size:12px; color:var(--text-2); margin-top:6px; line-height:1.5;}
-  .perf-line b{font-weight:700;}
-  .perf-line .neg{color:var(--expense);}
-  .perf-line .pos{color:var(--topup);}
 
   /* chips (beneficiary / occasion / source pickers) */
   .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
@@ -400,45 +392,17 @@
   .chip.sel{color:var(--gold); border-color:var(--gold); background:rgba(212,168,87,.12);}
   .chip.add{border-style:dashed;}
   .chip.sugg{border-color:var(--topup); color:var(--topup);}
-  textarea.field{min-height:150px; resize:vertical; font-size:13px; line-height:1.5;}
 
-  /* review tab */
-  .rv-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-md); padding:13px; margin-bottom:10px;}
-  .rv-card.warn{border-color:#4A2A24;}
-  .rv-card.info{border-color:var(--gold-dim);}
-  .rv-top{display:flex; align-items:flex-start; gap:10px;}
-  .rv-ic{font-size:18px; line-height:1.2;}
-  .rv-body{flex:1; min-width:0;}
-  .rv-title{font-size:13.5px; color:var(--text-1); line-height:1.5;}
-  .rv-sub{font-size:11px; color:var(--text-3); margin-top:3px; line-height:1.5;}
-  .rv-amt{font-size:15px; font-weight:700;}
-  .rv-actions{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
-  .rv-actions .btn{flex:0 0 auto; padding:8px 12px; font-size:12.5px;}
-  .rv-actions select{background:var(--bg-panel-2); color:var(--text-1); border:1px solid var(--line); border-radius:8px; padding:7px 8px; font-family:'Tajawal',sans-serif; font-size:12.5px;}
-  .sms-raw{display:none; white-space:pre-wrap; font-size:11px; color:var(--text-3); background:var(--bg-panel-2); border-radius:8px; padding:8px; margin-top:8px; direction:auto;}
-  .sms-raw.show{display:block;}
-  .sms-cats{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:10px;}
-  .sms-cats .cat-btn{opacity:1; padding:8px 2px 6px;}
-  .sms-cats .cat-btn.sugg{border-color:var(--topup);}
-  .kind-pill{font-size:10.5px; padding:2px 8px; border-radius:20px; border:1px solid var(--line); color:var(--text-2); margin-inline-start:6px; font-weight:400;}
-  .kind-pill.debit{color:var(--expense); border-color:#4A2A24;}
-  .kind-pill.credit{color:var(--topup); border-color:#2A4A3A;}
-  .rv-empty{color:var(--text-3); font-size:12.5px; text-align:center; padding:14px 8px 18px;}
-  .help-steps{font-size:13px; line-height:1.8; color:var(--text-1); padding-inline-start:20px; margin:0 0 12px;}
-  .help-steps li{margin-bottom:6px;}
   .help-note{font-size:11.5px; color:var(--text-2); line-height:1.6; background:var(--bg-panel-2); border-radius:10px; padding:10px; margin-bottom:10px;}
+  .cat-btn .lim{font-size:9px; color:var(--text-3);}
+  .cat-btn .lim.warn{color:var(--gold);}
+  .cat-btn .lim.over{color:var(--expense);}
+  .chip.warn{color:var(--gold); border-color:var(--gold-dim);}
+  .chip.over{color:var(--expense); border-color:#4A2A24;}
   .cd-meta{font-size:11.5px; color:var(--text-2);}
-  .cd-flag{font-size:10.5px; color:var(--expense);}
   .cd-row.editable{cursor:pointer;}
   .cd-row.editable:active{background:var(--bg-raised);}
 
-  /* cycle comparison table */
-  .cmp-table{width:100%; border-collapse:collapse; font-size:11.5px;}
-  .cmp-table th{color:var(--text-3); font-weight:400; text-align:start; padding:4px 3px; border-bottom:1px solid var(--line);}
-  .cmp-table td{padding:7px 3px; border-bottom:1px dashed var(--line); color:var(--text-1);}
-  .cmp-table td.neg{color:var(--expense);}
-  .cmp-table td.pos{color:var(--topup);}
-  .fin-note{font-size:11.5px; color:var(--text-2); line-height:1.6; margin-top:8px;}
 </style>
 </head>
 <body>
@@ -455,11 +419,10 @@
     <div class="remaining-label">المتبقي من الميزانية</div>
     <div class="remaining-value mono" id="remainingVal">٠</div>
     <div class="remaining-sub" id="remainingSub">من أصل ٠ ر.س</div>
-    <div class="perf-line" id="perfLine"></div>
     <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
     <div class="rate-row" id="rateRow">
       <div class="rate-item">
-        <div class="rate-item-label">معدل الصرف اليومي<br>(بناء على الأيام الماضية)</div>
+        <div class="rate-item-label" id="rateSpentLabel">معدل الصرف اليومي</div>
         <div class="rate-item-value mono" id="avgSpentPerDay">٠ ر.س</div>
       </div>
       <div class="rate-divider"></div>
@@ -487,6 +450,7 @@
       <div class="key" data-k="1">١</div><div class="key" data-k="2">٢</div><div class="key" data-k="3">٣</div>
       <div class="key func" data-k=".">٫</div><div class="key" data-k="0">٠</div><div class="key func" data-k="back">⌫</div>
     </div>
+    <div class="chip-row" id="limitStrip" style="display:none; margin-bottom:10px;"></div>
     <div class="cats-hint" id="catsHint">أدخل المبلغ بالأعلى ثم اختر الفئة لخصمه منها</div>
     <div class="cats-title" id="catsTitle" style="display:none;">اختر الفئة لخصم المبلغ منها</div>
     <div class="cat-grid" id="catGrid" style="display:none;"></div>
@@ -505,29 +469,6 @@
       <div class="receipt-wrap" id="receiptWrap">
         <div class="receipt-empty">لا توجد عمليات بعد هذا الشهر</div>
       </div>
-    </div>
-  </div>
-
-  <!-- REVIEW SCREEN (bank SMS inbox + smart data reviewer) -->
-  <div class="screen" id="screen-review">
-    <div class="screen-scroll">
-      <div class="sec-card">
-        <div class="sec-h" style="display:flex; justify-content:space-between; align-items:center;">
-          <span>📩 رسائل البنك بانتظار التصنيف</span>
-          <span id="smsCount" class="mono" style="color:var(--gold); font-weight:700;"></span>
-        </div>
-        <div class="mini-actions">
-          <div class="btn primary" id="btnSmsPaste">لصق رسائل</div>
-          <div class="btn" id="btnSmsFile">استيراد ملف</div>
-          <div class="btn ghost" id="btnSmsHelp">طريقة الربط</div>
-        </div>
-        <input type="file" id="smsFileInput" accept="text/plain,.txt" style="display:none;">
-      </div>
-      <div id="smsList"></div>
-      <div class="screen-title" style="margin-top:6px;">🔔 تنبيهات</div>
-      <div id="alertList"></div>
-      <div class="screen-title" style="margin-top:6px;">🔍 عمليات كبيرة بلا وصف</div>
-      <div id="largeList"></div>
     </div>
   </div>
 
@@ -568,25 +509,7 @@
           <div class="rating-note" id="finRatingNote"></div>
         </div>
       </div>
-      <div class="sec-card" id="finPerfCard">
-        <div class="sec-h">⚖️ أداء الدورة الحالية (الرصيد ≠ الأداء)</div>
-        <div class="fin-grid" id="finPerfGrid" style="margin:10px 0 0;"></div>
-        <div class="fin-note" id="finPerfNote"></div>
-      </div>
       <div class="fin-grid" id="finGrid"></div>
-      <div class="sec-card" id="finSustainCard" style="display:none;">
-        <div class="sec-h">🌱 مؤشر الاستدامة المالية (الدورات المكتملة)</div>
-        <div class="fin-grid" id="finSustainGrid" style="margin:10px 0 0;"></div>
-        <div class="fin-note" id="finSustainNote"></div>
-      </div>
-      <div class="sec-card" id="finCompareCard" style="display:none;">
-        <div class="sec-h" style="display:flex; justify-content:space-between; align-items:center;">
-          <span>📅 مقارنة الدورات</span>
-          <span class="chip" id="cmpExclToggle" style="font-size:11px; padding:4px 9px;">استبعاد المناسبات</span>
-        </div>
-        <div style="overflow-x:auto; margin-top:10px;"><table class="cmp-table" id="finCompare"></table></div>
-        <div class="fin-note">«لكل ٣٠ يومًا» يوحّد المقارنة بين دورات مختلفة الطول.</div>
-      </div>
       <div class="sec-card" id="finBillsCard" style="display:none;">
         <div class="sec-h" style="display:flex; justify-content:space-between; align-items:center;">
           <span>🧾 الفواتير الشهرية الثابتة</span>
@@ -608,7 +531,6 @@
 <div class="bottomnav" id="bottomNav">
   <div class="navbtn active" data-screen="calc"><span class="nic">🧮</span><span class="nlb">الرئيسية</span></div>
   <div class="navbtn" data-screen="history"><span class="nic">🧾</span><span class="nlb">السجل</span></div>
-  <div class="navbtn" data-screen="review"><span class="nic">🔎<span class="nbadge" id="reviewBadge"></span></span><span class="nlb">المراجعة</span></div>
   <div class="navbtn" data-screen="savings"><span class="nic">💰</span><span class="nlb">الإدخار</span></div>
   <div class="navbtn" data-screen="commitments"><span class="nic">💳</span><span class="nlb">الالتزامات</span></div>
   <div class="navbtn" data-screen="financial"><span class="nic">📊</span><span class="nlb">الوضع المالي</span></div>
@@ -649,16 +571,13 @@
       <span>الوضع الليلي</span>
       <div class="switch on" id="themeSwitch"></div>
     </div>
-    <div class="row" id="rowNewSalary" style="cursor:pointer;"><span>💵 استلام راتب جديد (بدء شهر جديد)</span><span>›</span></div>
+    <div class="row" id="rowIncome" style="cursor:pointer;"><span>💵 الدخل الشهري ويوم الراتب</span><span id="incomeRowVal" style="font-size:12px; color:var(--text-2);">›</span></div>
+    <div class="row" id="rowNewSalary" style="cursor:pointer;"><span>بدء دورة جديدة يدويًا</span><span>›</span></div>
     <div class="row" id="rowEditBudget" style="cursor:pointer;"><span>تعديل ميزانية الشهر الحالي</span><span>›</span></div>
     <div class="row" id="rowManageCats" style="cursor:pointer;"><span>إدارة الفئات</span><span>›</span></div>
     <div class="row">
       <span>عرض شهر سابق</span>
       <select id="pastMonthSelect"><option value="">اختر الشهر</option></select>
-    </div>
-    <div class="row">
-      <span>يوم نزول الراتب</span>
-      <select id="paydaySelect"></select>
     </div>
     <div class="row" id="rowExportBackup" style="cursor:pointer;"><span>تنزيل نسخة احتياطية شاملة</span><span>↓</span></div>
     <div class="row" id="rowExportFinance" style="cursor:pointer;"><span>تصدير البيانات المالية فقط</span><span>↓</span></div>
@@ -748,7 +667,9 @@
     <input type="text" id="commitNameInput" class="field" placeholder="مثال: قرض السيارة">
     <div class="icon-pick-title" style="margin-top:0;">اختر أيقونة</div>
     <div class="icon-pick-grid" id="commitIconGrid"></div>
-    <label class="fld-l">إجمالي المبلغ (ر.س)</label>
+    <label class="fld-l">القسط الشهري (ر.س) — يُخصم تلقائيًا من كل راتب</label>
+    <input type="text" inputmode="decimal" id="commitMonthlyInput" class="field" placeholder="0">
+    <label class="fld-l">إجمالي المبلغ (اختياري — اتركه فارغًا لالتزام مستمر بلا نهاية)</label>
     <input type="text" inputmode="decimal" id="commitTotalInput" class="field" placeholder="0">
     <label class="fld-l">المدفوع سابقًا (اختياري)</label>
     <input type="text" inputmode="decimal" id="commitPaidInput" class="field" placeholder="0">
@@ -764,7 +685,12 @@
   <div class="sheet">
     <h3 id="commitDetailTitle">الالتزام</h3>
     <div class="cd-total" id="commitDetailFigs"></div>
-    <label class="fld-l">تسجيل دفعة جديدة (ر.س) — ستُخصم من ميزانية الشهر</label>
+    <label class="fld-l">القسط الشهري (يُخصم تلقائيًا عند بدء كل دورة) — ٠ لإيقاف الخصم التلقائي</label>
+    <div class="cm-form" style="margin:0 0 12px;">
+      <input type="text" inputmode="decimal" id="commitMonthlyEdit" style="flex:1; min-width:0;">
+      <div class="btn" id="btnCommitMonthlySave" style="flex:0 0 auto; padding:10px 16px;">حفظ</div>
+    </div>
+    <label class="fld-l">تسجيل دفعة إضافية يدويًا (ر.س) — تُخصم من ميزانية الدورة</label>
     <input type="text" inputmode="decimal" id="commitPayInput" class="field" placeholder="0">
     <div class="budget-actions">
       <div class="btn primary" id="btnCommitPayConfirm">تسجيل الدفعة</div>
@@ -775,6 +701,22 @@
       <div class="btn danger" id="btnCommitDelete">حذف هذا الالتزام</div>
     </div>
     <div class="close-sheet" id="closeCommitDetail">إغلاق</div>
+  </div>
+</div>
+
+<!-- MONTHLY INCOME SHEET -->
+<div class="overlay" id="incomeOverlay">
+  <div class="sheet">
+    <h3>الدخل الشهري ويوم الراتب</h3>
+    <div class="help-note">في هذا اليوم من كل شهر تبدأ دورة جديدة تلقائيًا: يُضاف الدخل، ويُرحَّل المتبقي من الدورة السابقة، وتُخصم أقساط الالتزامات الشهرية.</div>
+    <label class="fld-l">الدخل الشهري (ر.س)</label>
+    <input type="text" inputmode="decimal" id="incomeInput" class="field" placeholder="0">
+    <label class="fld-l">يوم نزول الراتب</label>
+    <select id="paydaySelect" class="field"></select>
+    <div class="budget-actions">
+      <div class="btn primary" id="btnIncomeSave">حفظ</div>
+    </div>
+    <div class="close-sheet" id="closeIncome">إغلاق</div>
   </div>
 </div>
 
@@ -804,37 +746,6 @@
       <div class="btn danger" id="btnTxDelete" style="flex:0 0 auto; padding:13px 16px;">حذف</div>
     </div>
     <div class="close-sheet" id="closeTxEdit">إغلاق</div>
-  </div>
-</div>
-
-<!-- SMS PASTE SHEET -->
-<div class="overlay" id="smsPasteOverlay">
-  <div class="sheet">
-    <h3>لصق رسائل البنك</h3>
-    <div class="help-note">الصق رسالة واحدة أو عدة رسائل دفعة واحدة. افصل بين الرسائل بسطر فارغ أو بسطر «---». الرسائل المكررة تُتجاهل تلقائيًا، ورسائل رموز التحقق لا تُقرأ.</div>
-    <textarea id="smsPasteInput" class="field" placeholder="شراء عبر نقاط البيع&#10;مبلغ: SAR 45.50&#10;لدى: STARBUCKS&#10;في: 25/11/10 14:30"></textarea>
-    <div class="budget-actions">
-      <div class="btn" id="btnSmsClipboard">لصق من الحافظة</div>
-      <div class="btn primary" id="btnSmsParse">قراءة الرسائل</div>
-    </div>
-    <div class="close-sheet" id="closeSmsPaste">إغلاق</div>
-  </div>
-</div>
-
-<!-- SMS HELP SHEET -->
-<div class="overlay" id="smsHelpOverlay">
-  <div class="sheet">
-    <h3>ربط رسائل البنك تلقائيًا (آيفون)</h3>
-    <div class="help-note">لا يسمح iOS لأي تطبيق — ولا تطبيقات الويب — بقراءة الرسائل مباشرة. الحل: أتمتة في تطبيق «الاختصارات» تحفظ كل رسالة بنكية في ملف نصي، ثم تستورده هنا متى شئت وتصنّف العمليات لاحقًا.</div>
-    <ol class="help-steps">
-      <li>افتح تطبيق <b>الاختصارات</b> ← <b>الأتمتة</b> ← <b>+</b> ← <b>رسالة</b>.</li>
-      <li>في «المرسل» اختر اسم البنك (مثل AlRajhiBank أو SNB)، ويمكنك إضافة شرط «الرسالة تحتوي على: مبلغ».</li>
-      <li>اختر <b>التشغيل فورًا</b>.</li>
-      <li>أضف إجراء <b>إلحاق بملف نصي</b> (Append to Text File): النص = «مُدخَل الاختصار» ثم سطر جديد ثم <span class="mono">---</span>، والملف = <span class="mono">Shortcuts/bank-sms.txt</span>.</li>
-      <li>متى ما أردت: افتح تبويب المراجعة ← <b>استيراد ملف</b> ← اختر <span class="mono">bank-sms.txt</span> من iCloud Drive.</li>
-    </ol>
-    <div class="help-note">إعادة استيراد نفس الملف آمنة: الرسائل التي سبق قراءتها لا تتكرر. ويتذكّر التطبيق فئة كل متجر ليقترحها تلقائيًا في المرة القادمة.</div>
-    <div class="close-sheet" id="closeSmsHelp">إغلاق</div>
   </div>
 </div>
 
@@ -908,10 +819,8 @@
   let txEditDraft = null;       // {category, who, occasion} being edited
   let topupSource = null;       // 'income' | 'other' | 'jar:<id>' for "إضافة للرصيد"
   let jarToBudget = true;       // jar withdraw → linked top-up of current cycle
-  let cmpExcludeOccasions = true;
 
   const SCHEMA_VERSION = 2;
-  const LARGE_TX = 500;          // expenses at/above this ask for a short description
   const DEFAULT_PEOPLE = ['أنا','العائلة','الأطفال'];
 
   function esc(s){
@@ -934,6 +843,14 @@
     migrateSavings();
     if(!Array.isArray(DB.commitments)) DB.commitments = [];
     if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
+    if(!DB.catLimits || typeof DB.catLimits !== 'object') DB.catLimits = {};
+    // commitments get a monthly instalment (auto-deducted each cycle); seed it once from the last payment
+    DB.commitments.forEach(c=>{
+      if(c.monthly === undefined){
+        const last = (c.payments||[]).slice().sort((a,b)=>b.ts-a.ts)[0];
+        c.monthly = last ? last.amount : 0;
+      }
+    });
     if(!DB.restraint || typeof DB.restraint !== 'object') DB.restraint = {entries:[]};
     if(!Array.isArray(DB.restraint.entries)) DB.restraint.entries = [];
     if(!DB.tags || typeof DB.tags !== 'object') DB.tags = {};
@@ -970,11 +887,6 @@
     }
     return null;
   }
-  // an expense the user should describe (big, not a commitment, not yet explained)
-  function needsDescription(t){
-    return t.type==='expense' && t.amount >= LARGE_TX && t.category!==COMMIT_CAT.id && !t.note && !t.reviewed;
-  }
-
   // ----- linked transfers: savings jar → cycle budget is ONE movement -----
   function addTopup(key, amt, source, ts, extra){
     const data = ensureCycle(key);
@@ -1005,68 +917,82 @@
     return 'إضافة للميزانية (مصدر غير محدد)';
   }
 
-  // ----- cycle performance (income vs spending, independent of the balance) -----
-  function cycleDays(key){
-    const c = buildCycle(key);
-    if(!c) return 1;
-    const end = c.end ? startOfDay(c.end) : startOfDay(new Date());
-    return Math.max(Math.round((end - startOfDay(c.start))/86400000) + 1, 1);
+  // ----- monthly income / payday / automatic cycles -----
+  function paydayNum(){
+    const pd = parseInt(DB.settings && DB.settings.payday, 10);
+    return (pd >= 1 && pd <= 31) ? pd : null;
   }
-  function cyclePerf(key){
-    const c = DB.cycles[key];
-    const p = {salary:0, extraIncome:0, income:0, expense:0, diff:0, carry:0, jarIn:0, otherIn:0, unknownIn:0, balance:0, occasionSpend:0};
-    if(!c) return p;
-    p.salary = c.salary || 0;
-    p.carry = c.carry || 0;
-    c.transactions.forEach(t=>{
-      if(t.type === 'expense'){
-        p.expense += t.amount;
-        if(t.occasion) p.occasionSpend += t.amount;
-      } else if(t.type === 'topup'){
-        if(t.source === 'income') p.extraIncome += t.amount;
-        else if(t.source === 'jar') p.jarIn += t.amount;
-        else if(t.source === 'other') p.otherIn += t.amount;
-        else p.unknownIn += t.amount;
-      }
-    });
-    p.income = p.salary + p.extraIncome;
-    p.diff = p.income - p.expense;
-    p.balance = (c.budget||0) - p.expense;
+  function paydayIn(y, m, pd){ return new Date(y, m, Math.min(pd, new Date(y, m+1, 0).getDate())); }
+  // first payday strictly after the given day
+  function nextPaydayAfter(d){
+    const pd = paydayNum();
+    d = startOfDay(d);
+    let p = paydayIn(d.getFullYear(), d.getMonth(), pd);
+    if(p <= d) p = paydayIn(d.getFullYear(), d.getMonth()+1, pd);
     return p;
   }
-  function completedKeys(){
-    const ks = orderedKeys();
-    return ks.filter(k=>k !== DB.currentCycleKey && buildCycle(k).end);
+  function autoSalaryOn(){ return paydayNum() && (DB.settings.income||0) > 0; }
+
+  // on every app open: start any salary cycle whose payday has arrived (income added,
+  // leftover carried, monthly commitments deducted). Only paydays after the feature was
+  // switched on count, so existing cycles are never split retroactively.
+  function runAutoSalary(){
+    if(!autoSalaryOn() || !DB.currentCycleKey) return 0;
+    const today = startOfDay(new Date());
+    let made = 0;
+    for(let guard=0; guard<24; guard++){
+      const cur = DB.cycles[DB.currentCycleKey];
+      const base = new Date(Math.max(cur.startTs||0, DB.settings.autoFrom||0));
+      const next = nextPaydayAfter(base);
+      if(next > today) break;
+      beginSalaryCycle(DB.settings.income, true, next.getTime());
+      made++;
+    }
+    return made;
   }
 
-  // ----- payday / safe daily limit -----
-  function nextPaydayDate(){
-    const pd = parseInt(DB.settings && DB.settings.payday, 10);
-    const today = startOfDay(new Date());
-    if(!(pd >= 1 && pd <= 31)){
-      const c = getCurrentCycle();
-      const start = c ? startOfDay(c.start) : today;
-      const d = new Date(start.getTime() + 30*86400000);
-      return d > today ? d : new Date(today.getTime() + 86400000);
+  // the cycle's length in days: up to the next payday when it's known, otherwise the
+  // average length of past cycles (never a fixed 30 days unless there's no history)
+  function cycleLengthDays(key){
+    const c = buildCycle(key);
+    if(!c) return 30;
+    const start = startOfDay(c.start);
+    if(c.end) return Math.round((startOfDay(c.end) - start)/86400000) + 1;
+    if(paydayNum()) return Math.round((nextPaydayAfter(new Date()) - start)/86400000);
+    const past = orderedKeys().filter(k=>k!==key && buildCycle(k).end);
+    if(past.length){
+      const avg = past.reduce((s,k)=>{ const b=buildCycle(k); return s + Math.round((startOfDay(b.end)-startOfDay(b.start))/86400000) + 1; },0) / past.length;
+      return Math.max(Math.round(avg), 1);
     }
-    const mk = (y,m)=> new Date(y, m, Math.min(pd, new Date(y, m+1, 0).getDate()));
-    let d = mk(today.getFullYear(), today.getMonth());
-    if(d <= today) d = mk(today.getFullYear(), today.getMonth()+1);
-    return d;
+    return 30;
   }
-  function daysUntilPayday(){
-    return Math.max(Math.round((nextPaydayDate() - startOfDay(new Date()))/86400000), 1);
+  function cyclePredictedEnd(key){
+    const c = buildCycle(key);
+    if(!c) return null;
+    if(c.end) return c.end;
+    return new Date(startOfDay(c.start).getTime() + (cycleLengthDays(key)-1)*86400000);
   }
-  // commitments that are usually paid each cycle but have no payment in the current one
-  function expectedCommitments(){
-    const k = DB.currentCycleKey;
-    if(!k) return [];
-    const cur = DB.cycles[k];
-    return (DB.commitments||[]).filter(c=>{
-      if(commitRemaining(c) <= 0) return false;
-      if(!(c.payments||[]).length) return false;
-      return !cur.transactions.some(t=>t.commitmentId===c.id);
-    }).map(c=>({c, amount: Math.min(Number(commitUsualAmount(c))||0, commitRemaining(c))}));
+  // day-to-day spending only: commitments and fixed bills are excluded
+  function isVariableSpend(t){
+    return t.type==='expense' && t.category!==COMMIT_CAT.id && !(DB.billCategories||[]).includes(t.category);
+  }
+  // bills not yet paid this cycle, estimated from their average in past cycles
+  function expectedBillsLeft(key){
+    const past = orderedKeys().filter(k=>k!==key).slice(-3);
+    if(!past.length) return 0;
+    return (DB.billCategories||[]).reduce((sum,id)=>{
+      const avg = past.reduce((s,k)=>s+catSpendInCycle(k,id),0) / past.length;
+      return sum + Math.max(0, avg - catSpendInCycle(key,id));
+    }, 0);
+  }
+
+  // ----- per-category monthly limits -----
+  function catLimit(id){ const v = (DB.catLimits||{})[id]; return v > 0 ? v : 0; }
+  function limitStatus(id, key){
+    const limit = catLimit(id);
+    if(!limit) return null;
+    const spent = catSpendInCycle(key || DB.currentCycleKey, id);
+    return { limit, spent, left: limit - spent, pct: spent/limit*100 };
   }
 
   function getAllCategories(){
@@ -1152,11 +1078,13 @@
     }
   }
 
-  function toast(msg){
+  let toastTimer = null;
+  function toast(msg, ms){
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 1600);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), ms || 1600);
   }
 
   // ---------- storage ----------
@@ -1242,30 +1170,6 @@
     if(!c) return 0;
     return c.budget - cycleExpenseTotal(key);
   }
-  // daily spending rate: trailing 30 calendar days, across all cycles (independent of
-  // the salary cycle boundaries), excluding fixed monthly bills and commitment payments
-  // (those are predictable/recurring and shouldn't skew the day-to-day rate)
-  function trailingSpendForRate(days){
-    const today = startOfDay(new Date());
-    const windowStart = new Date(today.getTime() - (days-1)*86400000);
-    const fixed = DB.billCategories || [];
-    let sum = 0;
-    Object.keys(DB.cycles).forEach(k=>{
-      DB.cycles[k].transactions.forEach(t=>{
-        if(t.type!=='expense' || t.category===COMMIT_CAT.id || fixed.includes(t.category)) return;
-        const d = startOfDay(new Date(t.ts));
-        if(d >= windowStart && d <= today) sum += t.amount;
-      });
-    });
-    return sum;
-  }
-  function daysSinceTrackingStarted(){
-    const ks = orderedKeys();
-    if(!ks.length) return 1;
-    const firstStart = startOfDay(new Date(DB.cycles[ks[0]].startTs || Date.now()));
-    return Math.max(Math.round((startOfDay(new Date()) - firstStart)/86400000) + 1, 1);
-  }
-
   // ---------- savings / commitments helpers ----------
   // savings are now goal-based "jars"; migrate any older flat-savings data into them
   function migrateSavings(){
@@ -1289,6 +1193,7 @@
   function commitPaid(c){
     return (c.initialPaid||0) + (c.payments||[]).reduce((a,p)=>a+(p.amount||0),0);
   }
+  function isOngoing(c){ return !(c.total > 0); }
   function commitRemaining(c){
     return Math.max(0, (c.total||0) - commitPaid(c));
   }
@@ -1314,7 +1219,6 @@
       document.getElementById('barFill').style.width = '0%';
       document.getElementById('avgSpentPerDay').textContent = '٠ ر.س';
       document.getElementById('avgAvailablePerDay').textContent = '٠ ر.س';
-      document.getElementById('perfLine').innerHTML = '';
       banner.classList.remove('show');
       return;
     }
@@ -1327,8 +1231,9 @@
       banner.classList.remove('show');
     }
 
+    const endShown = c.end || cyclePredictedEnd(c.key);
     document.getElementById('cycleLabel').textContent =
-      fmtShort(c.start) + '  —  ' + (c.end ? fmtShort(c.end) : 'الآن');
+      fmtShort(c.start) + '  —  ' + (endShown ? fmtShort(endShown) : 'الآن');
 
     const data = ensureCycle(c.key);
     const spent = cycleExpenseTotal(c.key);
@@ -1342,41 +1247,23 @@
     bf.style.width = pct + '%';
     bf.classList.toggle('over', remaining < 0);
 
-    // rates: average daily spend so far, and average daily budget available (projected 30-day month)
-    const PROJECTED_LEN = 30;
+    // rates are always per salary cycle (never a fixed 30 days):
+    //  - spent per day  = day-to-day spending this cycle (no commitments / fixed bills) ÷ days elapsed
+    //  - available/day  = remaining (minus bills still expected this cycle) ÷ days left until payday
     const today = startOfDay(new Date());
     const cycleStart = startOfDay(c.start);
-    const cycleEnd = c.end ? startOfDay(c.end) : null;
-    let daysPassed;
-    if(cycleEnd){
-      const totalDays = Math.round((cycleEnd - cycleStart)/86400000) + 1;
-      daysPassed = Math.min(Math.max(Math.round((today - cycleStart)/86400000)+1,1), totalDays);
-    } else {
-      daysPassed = Math.max(Math.round((today - cycleStart)/86400000)+1, 1);
-    }
+    const totalDays = cycleLengthDays(c.key);
+    const daysPassed = Math.min(Math.max(Math.round((today - cycleStart)/86400000)+1, 1), totalDays);
     const isCurrent = !viewCycleKey;
-    const daysRemaining = isCurrent ? daysUntilPayday() : Math.max(PROJECTED_LEN - daysPassed + 1, 1);
-    const expected = isCurrent ? expectedCommitments().reduce((s,x)=>s+x.amount,0) : 0;
-
-    const rateDays = Math.min(PROJECTED_LEN, daysSinceTrackingStarted());
-    const avgSpentPerDay = trailingSpendForRate(PROJECTED_LEN) / rateDays;
-    const avgAvailablePerDay = (remaining - expected) / daysRemaining;
+    const daysLeft = isCurrent ? Math.max(totalDays - daysPassed + 1, 1) : 1;
+    const variable = data.transactions.filter(isVariableSpend).reduce((s,t)=>s+t.amount,0);
+    const avgSpentPerDay = variable / daysPassed;
+    const billsLeft = isCurrent ? expectedBillsLeft(c.key) : 0;
+    const avgAvailablePerDay = isCurrent ? (remaining - billsLeft) / daysLeft : remaining;
+    document.getElementById('rateSpentLabel').innerHTML = 'معدل الصرف اليومي<br>(هذه الدورة، بدون الالتزامات والفواتير)';
     document.getElementById('safeDailyLabel').innerHTML = isCurrent
-      ? 'الحد اليومي الآمن<br>(' + daysRemaining + ' يومًا حتى الراتب' + (expected>0 ? '، بعد ' + fmtNum(expected) + ' التزامات' : '') + ')'
-      : 'المتاح يوميًا<br>(تقديري على ٣٠ يوم)';
-
-    // balance ≠ performance: show the cycle's income vs spending next to the balance
-    const p = cyclePerf(c.key);
-    const perfEl = document.getElementById('perfLine');
-    if(p.income > 0){
-      const extra = [];
-      if(p.carry) extra.push((p.carry>0?'مرحّل ':'عجز مرحّل ') + fmtNum(Math.abs(p.carry)));
-      if(p.jarIn) extra.push('من المدخرات ' + fmtNum(p.jarIn));
-      if(p.otherIn + p.unknownIn) extra.push('تغذية أخرى ' + fmtNum(p.otherIn + p.unknownIn));
-      perfEl.innerHTML = 'الفرق عن دخل الدورة: <b class="mono ' + (p.diff<0?'neg':'pos') + '">' + (p.diff<0?'−':'+') + fmtNum(Math.abs(p.diff)) + '</b>' +
-        '<br><span style="color:var(--text-3)">الدخل ' + fmtNum(p.income) + ' • المصروف ' + fmtNum(p.expense) +
-        (extra.length ? ' • الرصيد يشمل: ' + extra.join(' • ') : '') + '</span>';
-    } else perfEl.innerHTML = '';
+      ? 'المتاح يوميًا<br>(' + daysLeft + ' يومًا حتى الراتب' + (billsLeft>0 ? '، بعد حجز ~' + fmtNum(Math.round(billsLeft)) + ' للفواتير' : '') + ')'
+      : 'المتبقي في نهاية الدورة<br>&nbsp;';
 
     document.getElementById('avgSpentPerDay').textContent = fmtNum(avgSpentPerDay) + ' ر.س';
     const avgAvailEl = document.getElementById('avgAvailablePerDay');
@@ -1391,11 +1278,25 @@
       const el = document.createElement('div');
       el.className = 'cat-btn';
       el.dataset.cat = cat.id;
-      el.innerHTML = `<span class="ic">${cat.icon}</span><span class="lb">${cat.label}</span>`;
+      const ls = DB.currentCycleKey ? limitStatus(cat.id) : null;
+      const lim = ls ? `<span class="lim${ls.pct>=100?' over':(ls.pct>=80?' warn':'')}">${ls.left>=0 ? 'باقي '+fmtNum(Math.round(ls.left)) : 'تجاوز '+fmtNum(Math.round(-ls.left))}</span>` : '';
+      el.innerHTML = `<span class="ic">${cat.icon}</span><span class="lb">${esc(cat.label)}</span>${lim}`;
       el.addEventListener('click', ()=> onCategoryTap(cat));
       grid.appendChild(el);
     });
     updateCatGridState();
+    renderLimitStrip();
+  }
+
+  // categories at 80%+ of their monthly limit stay visible on the home screen
+  function renderLimitStrip(){
+    const strip = document.getElementById('limitStrip');
+    if(!DB.currentCycleKey){ strip.style.display='none'; return; }
+    const items = getAllCategories().map(c=>({c, ls:limitStatus(c.id)})).filter(x=>x.ls && x.ls.pct >= 80)
+      .sort((a,b)=>b.ls.pct-a.ls.pct);
+    if(!items.length){ strip.style.display='none'; return; }
+    strip.style.display='flex';
+    strip.innerHTML = items.map(({c,ls})=>`<span class="chip ${ls.pct>=100?'over':'warn'}">${ls.pct>=100?'🚫':'⚠️'} ${c.icon} ${esc(c.label)}: <span class="mono">${fmtNum(Math.round(ls.spent))}/${fmtNum(ls.limit)}</span></span>`).join('');
   }
 
   function updateCatGridState(){
@@ -1564,13 +1465,12 @@
       const refund = t.amount < 0;
       const meta = [t.note, t.who ? '👤 '+t.who : '', t.occasion ? '🏷️ '+t.occasion : '', t.smsId ? '📩' : '']
         .filter(Boolean).map(esc).join(' • ');
-      const flag = needsDescription(t) ? '<span class="cd-flag">⚠︎ عملية كبيرة بلا وصف — اضغط لإضافته</span>' : '';
       return `<div class="cd-row editable" data-txedit="${t.id}">
         <div class="cd-top">
           <span class="cd-amt ${refund?'':'expense'} mono" style="${refund?'color:var(--topup)':''}">${refund?'+'+fmtNum(-t.amount)+' ر.س (استرداد)':'-'+fmtNum(t.amount)+' ر.س'}</span>
           <span class="cd-del" data-cddel="${t.id}">✕</span>
         </div>
-        ${meta ? `<div class="cd-meta">${meta}</div>` : ''}${flag}
+        ${meta ? `<div class="cd-meta">${meta}</div>` : ''}
         <div class="cd-dates">${greg}${hijri ? ' — ' + hijri + ' هـ' : ''} • ${time}</div>
       </div>`;
     }).join('');
@@ -1805,13 +1705,24 @@
       return;
     }
     list.innerHTML = items.map(c=>{
+      const monthlyTxt = c.monthly > 0 ? ('🔁 يُخصم تلقائيًا ' + fmtNum(c.monthly) + ' ر.س مع كل راتب') : 'بدون خصم تلقائي';
+      if(isOngoing(c)){
+        return `<div class="commit-card" data-commit="${c.id}">
+          <div class="commit-top">
+            <span class="ic">${c.icon||'💳'}</span>
+            <span class="commit-name">${esc(c.name)}</span>
+            <span class="commit-pct">مستمر</span>
+          </div>
+          <div class="commit-figs"><span>${monthlyTxt}</span><span>المدفوع <b class="mono">${fmtNum(commitPaid(c))}</b></span></div>
+        </div>`;
+      }
       const paid = commitPaid(c);
       const rem = commitRemaining(c);
       const pct = c.total>0 ? Math.min(100, (paid/c.total)*100) : 0;
       return `<div class="commit-card" data-commit="${c.id}">
         <div class="commit-top">
           <span class="ic">${c.icon||'💳'}</span>
-          <span class="commit-name">${c.name}</span>
+          <span class="commit-name">${esc(c.name)}</span>
           <span class="commit-pct mono">${Math.round(pct)}%</span>
         </div>
         <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
@@ -1820,6 +1731,7 @@
           <span>المدفوع <b class="mono">${fmtNum(paid)}</b></span>
           <span>المتبقي <b class="mono">${fmtNum(rem)}</b></span>
         </div>
+        <div class="commit-figs" style="margin:0;"><span>${monthlyTxt}</span></div>
       </div>`;
     }).join('');
     list.querySelectorAll('[data-commit]').forEach(el=>{
@@ -1846,6 +1758,7 @@
     document.getElementById('commitNameInput').value = '';
     document.getElementById('commitTotalInput').value = '';
     document.getElementById('commitPaidInput').value = '';
+    document.getElementById('commitMonthlyInput').value = '';
     renderCommitIconGrid();
     document.getElementById('commitAddOverlay').classList.add('show');
   }
@@ -1854,17 +1767,18 @@
     const name = document.getElementById('commitNameInput').value.trim();
     const total = parseInput('commitTotalInput');
     const paid = parseInput('commitPaidInput');
+    const monthly = parseInput('commitMonthlyInput');
     if(!name){ toast('اكتب اسم الالتزام'); return; }
-    if(total <= 0){ toast('أدخل الإجمالي'); return; }
+    if(monthly <= 0 && total <= 0){ toast('أدخل القسط الشهري'); return; }
     DB.commitments.push({
       id:'m'+Date.now()+Math.random().toString(36).slice(2,6),
-      name, icon:selectedCommitIcon, total, initialPaid:Math.min(paid,total), payments:[], createdTs:Date.now()
+      name, icon:selectedCommitIcon, total, monthly, initialPaid: total>0 ? Math.min(paid,total) : paid, payments:[], createdTs:Date.now()
     });
     await saveData();
     document.getElementById('commitAddOverlay').classList.remove('show');
     renderCommitments();
     renderFinancial();
-    toast('تمت إضافة الالتزام');
+    toast(monthly > 0 ? 'تمت الإضافة — يُخصم القسط تلقائيًا من الراتب القادم' : 'تمت إضافة الالتزام');
   }
 
   function openCommitDetail(id){
@@ -1873,10 +1787,12 @@
     if(!c) return;
     document.getElementById('commitDetailTitle').textContent = (c.icon||'💳') + ' ' + c.name;
     const paid = commitPaid(c), rem = commitRemaining(c);
-    document.getElementById('commitDetailFigs').innerHTML =
-      `<span>الإجمالي ${fmtNum(c.total)} — المدفوع ${fmtNum(paid)}</span><span class="mono">المتبقي ${fmtNum(rem)} ر.س</span>`;
+    document.getElementById('commitDetailFigs').innerHTML = isOngoing(c)
+      ? `<span>التزام مستمر</span><span class="mono">المدفوع ${fmtNum(paid)} ر.س</span>`
+      : `<span>الإجمالي ${fmtNum(c.total)} — المدفوع ${fmtNum(paid)}</span><span class="mono">المتبقي ${fmtNum(rem)} ر.س</span>`;
+    document.getElementById('commitMonthlyEdit').value = c.monthly || '';
     // pre-fill with the usual monthly amount so the user can just tap "تسجيل الدفعة" next time
-    document.getElementById('commitPayInput').value = commitUsualAmount(c);
+    document.getElementById('commitPayInput').value = '';
     renderCommitPayList(c);
     document.getElementById('commitDetailOverlay').classList.add('show');
   }
@@ -1893,7 +1809,7 @@
       const dateStr = formatGregorian(d) + ' • ' + formatTimeOnly(d);
       return `<div class="entry-row">
         <div class="entry-info">
-          <div class="entry-note">دفعة</div>
+          <div class="entry-note">${p.auto ? 'خصم تلقائي مع الراتب' : 'دفعة'}</div>
           <div class="entry-date">${dateStr}</div>
         </div>
         <span class="entry-amt neg mono">-${fmtNum(p.amount)}</span>
@@ -2043,99 +1959,6 @@
     // fixed monthly bills + top categories this cycle
     renderFinBills(income);
     renderFinBreakdown();
-    renderFinPerf();
-    renderFinSustain();
-    renderFinCompare();
-  }
-
-  function finCells(cells){
-    return cells.map(c=>`<div class="fin-cell"><div class="lbl">${c.lbl}</div><div class="num ${c.cls||''} mono">${c.num}</div></div>`).join('');
-  }
-
-  function renderFinPerf(){
-    const card = document.getElementById('finPerfCard');
-    const k = DB.currentCycleKey;
-    if(!k){ card.style.display='none'; return; }
-    card.style.display='block';
-    const p = cyclePerf(k);
-    const transfers = p.jarIn + p.otherIn + p.unknownIn;
-    document.getElementById('finPerfGrid').innerHTML = finCells([
-      {lbl:'الرصيد المتاح', num:fmtNum(p.balance)+' ر.س', cls:p.balance<0?'neg':''},
-      {lbl:'الفرق عن دخل الدورة', num:(p.diff<0?'−':'+')+fmtNum(Math.abs(p.diff))+' ر.س', cls:p.diff<0?'neg':'pos'},
-      {lbl:'الدخل المسجل (راتب + دخل إضافي)', num:fmtNum(p.income)},
-      {lbl:'المصروفات', num:fmtNum(p.expense)},
-      {lbl:'مرحّل من الدورة السابقة', num:fmtNum(p.carry), cls:p.carry<0?'neg':''},
-      {lbl:'تحويلات وتغذية (ليست دخلًا)', num:fmtNum(transfers)},
-    ]);
-    let note = '';
-    if(p.income > 0){
-      if(p.diff < 0 && p.balance >= 0){
-        const parts = [];
-        if(p.carry > 0) parts.push(fmtNum(p.carry) + ' ر.س مرحّلة من الدورة السابقة');
-        if(p.jarIn > 0) parts.push(fmtNum(p.jarIn) + ' ر.س من المدخرات');
-        if(p.otherIn + p.unknownIn > 0) parts.push(fmtNum(p.otherIn + p.unknownIn) + ' ر.س تغذية إضافية');
-        note = 'الرصيد موجب لأنه يتضمن ' + (parts.join(' و') || 'أموالًا غير الدخل') + '، أما المصروفات فتجاوزت دخل الدورة بمقدار ' + fmtNum(-p.diff) + ' ر.س. الرصيد الموجب هنا لا يعني الالتزام بالميزانية.';
-      } else if(p.diff < 0){
-        note = 'المصروفات تجاوزت دخل الدورة بمقدار ' + fmtNum(-p.diff) + ' ر.س.';
-      } else {
-        note = 'صرفت ' + Math.round(p.expense/p.income*100) + '% من دخل الدورة حتى الآن.';
-      }
-      if(p.unknownIn > 0) note += ' يوجد ' + fmtNum(p.unknownIn) + ' ر.س تغذية بلا مصدر محدد — حدّده من تبويب المراجعة.';
-    }
-    document.getElementById('finPerfNote').textContent = note;
-  }
-
-  // average spend per 30 days, optionally excluding occasion-tagged (exceptional) spending
-  function per30(key, exclOcc){
-    const p = cyclePerf(key);
-    const exp = exclOcc ? p.expense - p.occasionSpend : p.expense;
-    return exp / cycleDays(key) * 30;
-  }
-
-  function renderFinSustain(){
-    const card = document.getElementById('finSustainCard');
-    const ks = completedKeys().filter(k=>cyclePerf(k).income > 0);
-    if(!ks.length){ card.style.display='none'; return; }
-    card.style.display='block';
-    let inc=0, exp=0, needed=0;
-    ks.forEach(k=>{
-      const p = cyclePerf(k);
-      inc += p.income; exp += p.expense;
-      if(p.jarIn + p.otherIn + p.unknownIn > 0 || p.balance < 0) needed++;
-    });
-    const coverage = exp>0 ? inc/exp : 0;
-    const saveRate = inc>0 ? (inc-exp)/inc : 0;
-    const living = ks.reduce((s,k)=>s+per30(k,true),0) / ks.length;
-    document.getElementById('finSustainGrid').innerHTML = finCells([
-      {lbl:'تغطية الدخل للمصروفات', num:Math.round(coverage*100)+'%', cls:coverage>=1?'pos':'neg'},
-      {lbl:'معدل الادخار الفعلي', num:Math.round(saveRate*100)+'%', cls:saveRate>=0?'pos':'neg'},
-      {lbl:'دورات احتاجت تغذية (من أصل '+ks.length+')', num:String(needed), cls:needed>0?'neg':'pos'},
-      {lbl:'تكلفة المعيشة الاعتيادية / ٣٠ يوم', num:fmtNum(living)+' ر.س'},
-    ]);
-    document.getElementById('finSustainNote').textContent =
-      'تكلفة المعيشة الاعتيادية = متوسط الصرف لكل ٣٠ يومًا بعد استبعاد المصروفات المعلَّمة بمناسبة (سفر، بداية دراسة…). علّم المناسبات من تفاصيل العملية لتصبح أدق.';
-  }
-
-  function renderFinCompare(){
-    const card = document.getElementById('finCompareCard');
-    const ks = orderedKeys().slice(-6);
-    if(ks.length < 2){ card.style.display='none'; return; }
-    card.style.display='block';
-    document.getElementById('cmpExclToggle').classList.toggle('sel', cmpExcludeOccasions);
-    const rows = ks.slice().reverse().map(k=>{
-      const c = buildCycle(k), p = cyclePerf(k);
-      const label = fmtShort(c.start) + (k===DB.currentCycleKey ? ' (الحالية)' : '');
-      return `<tr>
-        <td>${label}</td>
-        <td class="mono">${cycleDays(k)}</td>
-        <td class="mono">${fmtNum(Math.round(p.income))}</td>
-        <td class="mono">${fmtNum(Math.round(p.expense))}</td>
-        <td class="mono">${fmtNum(Math.round(per30(k, cmpExcludeOccasions)))}</td>
-        <td class="mono ${p.diff<0?'neg':'pos'}">${p.income>0?(p.diff<0?'−':'+')+fmtNum(Math.round(Math.abs(p.diff))):'—'}</td>
-      </tr>`;
-    }).join('');
-    document.getElementById('finCompare').innerHTML =
-      '<tr><th>الدورة</th><th>أيام</th><th>الدخل</th><th>المصروف</th><th>لكل ٣٠ يوم</th><th>الفرق</th></tr>' + rows;
   }
 
   function renderFinBills(income){
@@ -2195,373 +2018,13 @@
     }).join('');
   }
 
-  // ---------- bank SMS: parse → inbox → classify later ----------
-  function hashStr(s){
-    let h = 5381;
-    for(let i=0;i<s.length;i++) h = ((h<<5) + h + s.charCodeAt(i)) | 0;
-    return (h>>>0).toString(36);
-  }
-  function arabicDigits(s){
-    return (s||'').replace(/[٠-٩]/g, d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫]/g,'.').replace(/[٬،]/g,',');
-  }
-  function toNum(s){ return parseFloat((s||'').replace(/,/g,'')); }
-  function merchantKey(m){ return (m||'').toLowerCase().replace(/[^a-z؀-ۿ]+/g,' ').trim().split(' ').slice(0,3).join(' '); }
-
-  function parseSmsDate(text){
-    // 2025-11-10 14:30 | 25/11/10 14:30 | 10-11-2025 | 10/11/25
-    const m = text.match(/(\d{1,4})[\/\-.](\d{1,2})[\/\-.](\d{1,4})(?:[^\d\n]{1,4}(\d{1,2}):(\d{2}))?/);
-    if(!m) return null;
-    const a=+m[1], b=+m[2], c=+m[3], hh=m[4]?+m[4]:12, mm=m[5]?+m[5]:0;
-    const now = Date.now();
-    const mk=(y,mo,d)=>{ if(y<100) y+=2000; if(mo<1||mo>12||d<1||d>31) return null; const dt=new Date(y,mo-1,d,hh,mm); return isNaN(dt)?null:dt.getTime(); };
-    const cands = [];
-    if(m[1].length===4) cands.push(mk(a,b,c));
-    else if(m[3].length===4) cands.push(mk(c,b,a));
-    else { cands.push(mk(a,b,c)); cands.push(mk(c,b,a)); }
-    const ok = cands.filter(x=>x && x <= now + 86400000);
-    if(!ok.length) return null;
-    ok.sort((x,y)=>Math.abs(now-x)-Math.abs(now-y));
-    return ok[0];
-  }
-
-  function parseSms(raw){
-    const text = arabicDigits(raw).replace(/\r/g,'').trim();
-    if(!text) return null;
-    if(/رمز|OTP|كلمة المرور|verification|passcode|لا تشارك/i.test(text)) return {skip:'otp'};
-    const NUM = '(\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)';
-    const CUR = '(SAR|SR|ر\\.?\\s?س|ريال|USD|EUR|GBP|AED|TRY|TL|KWD|BHD|QAR|EGP|\\$|€|£)';
-    let amount=null, currency=null;
-    let mm = text.match(new RegExp(CUR + '\\s*' + NUM, 'i')) ;
-    let mm2 = text.match(new RegExp(NUM + '\\s*' + CUR, 'i'));
-    // prefer a SAR figure when the message has both foreign and SAR amounts
-    const sarA = text.match(new RegExp('(SAR|SR|ر\\.?\\s?س|ريال)\\s*' + NUM, 'i'));
-    const sarB = text.match(new RegExp(NUM + '\\s*(SAR|SR|ر\\.?\\s?س|ريال)', 'i'));
-    if(sarA){ amount = toNum(sarA[2]); currency='SAR'; }
-    else if(sarB){ amount = toNum(sarB[1]); currency='SAR'; }
-    else if(mm){ amount = toNum(mm[2]); currency = mm[1].toUpperCase(); }
-    else if(mm2){ amount = toNum(mm2[1]); currency = mm2[2].toUpperCase(); }
-    else {
-      const mb = text.match(new RegExp('(?:مبلغ|بمبلغ|المبلغ|Amount|amt)[:\\s]*' + NUM, 'i'));
-      if(mb){ amount = toNum(mb[1]); currency='SAR'; }
-    }
-    if(!(amount > 0)) return {skip:'noamount'};
-    if(currency==='$') currency='USD'; if(currency==='€') currency='EUR'; if(currency==='£') currency='GBP'; if(currency==='TL') currency='TRY';
-
-    const credit = /وارد|واردة|إيداع|ايداع|استرداد|مسترد|راتب|إضافة\s*رصيد|credited|deposit|refund|received|incoming/i.test(text);
-    const debit = /شراء|سحب|صادر|صادرة|مدفوع|دفع|سداد|purchase|debit|withdraw|payment|POS|spent/i.test(text);
-    const kind = credit && !/شراء|purchase/i.test(text) ? 'credit' : (debit ? 'debit' : (credit ? 'credit' : 'debit'));
-    const isTransfer = /حوال|تحويل|transfer/i.test(text);
-    const isRefund = /استرداد|مسترد|refund/i.test(text);
-
-    let merchant = '';
-    const keys = ['لدى|عند|merchant|at', 'اسم المستفيد|للمستفيد|المستفيد|إلى|الى|to', 'من|from'];
-    for(const k of keys){
-      const mt = text.match(new RegExp('(?:^|[\\s;])(?:' + k + ')\\s*[:：]?\\s*([^\\n;]+)', 'i'));
-      if(!mt) continue;
-      const v = mt[1].replace(/\s+/g,' ').trim().slice(0,40);
-      if(v && !/^[\d*]/.test(v) && !/^(SAR|SR)\b/i.test(v)){ merchant = v; break; }
-    }
-
-    return { amount, currency, kind, isTransfer, isRefund, merchant, ts: parseSmsDate(text) };
-  }
-
-  function splitMessages(raw){
-    const t = (raw||'').replace(/\r/g,'');
-    const parts = /\n\s*-{3,}\s*(\n|$)/.test(t) ? t.split(/\n\s*-{3,}\s*(?:\n|$)/) : t.split(/\n\s*\n/);
-    return parts.map(s=>s.trim()).filter(Boolean);
-  }
-
-  async function importSmsText(raw){
-    const msgs = splitMessages(raw);
-    const known = new Set(DB.smsInbox.map(s=>s.hash));
-    let added=0, dup=0, skipped=0;
-    msgs.forEach(text=>{
-      const hash = hashStr(text.replace(/\s+/g,' '));
-      if(known.has(hash)){ dup++; return; }
-      const p = parseSms(text);
-      if(!p || p.skip){ skipped++; return; }
-      known.add(hash);
-      DB.smsInbox.push({
-        id: uid('m'), hash, text, status:'pending', importedTs: Date.now(),
-        amount:p.amount, currency:p.currency, kind:p.kind, isTransfer:p.isTransfer, isRefund:p.isRefund,
-        merchant:p.merchant, ts:p.ts || Date.now(), tsGuessed: !p.ts
-      });
-      added++;
-    });
-    await saveData();
-    renderAll();
-    let msg = added ? ('أُضيفت ' + added + ' رسالة للتصنيف') : 'لا توجد رسائل جديدة';
-    if(dup) msg += ' • ' + dup + ' مكررة';
-    if(skipped) msg += ' • ' + skipped + ' غير مفهومة';
-    toast(msg);
-    return added;
-  }
-
-  function pendingSms(){ return DB.smsInbox.filter(s=>s.status==='pending').sort((a,b)=>b.ts-a.ts); }
-
-  // when classified, the raw text is kept on the transaction; the inbox keeps only the hash (for de-duplication)
-  function finishSms(s, status){
-    s.status = status;
-    s.doneTs = Date.now();
-  }
-  function smsSarAmount(s, cardEl){
-    if(s.currency === 'SAR') return s.amount;
-    const inp = cardEl && cardEl.querySelector('[data-sar]');
-    const v = inp ? parseFloat(normNum(inp.value)) : 0;
-    return v > 0 ? v : 0;
-  }
-
-  async function classifySmsExpense(smsId, catId, cardEl){
-    const s = DB.smsInbox.find(x=>x.id===smsId);
-    if(!s) return;
-    if(!orderedKeys().length){ toast('ابدأ دورة (راتبًا) أولًا'); return; }
-    const amt = smsSarAmount(s, cardEl);
-    if(!(amt > 0)){ toast('اكتب المبلغ بالريال (بعد التحويل والرسوم)'); return; }
-    const key = cycleKeyForTs(s.ts);
-    const refund = s.kind === 'credit';
-    const tx = { id:uid('t'), type:'expense', amount: refund ? -amt : amt, category:catId, ts:s.ts, createdTs:Date.now(),
-      smsId:s.id, smsText:s.text, merchantKey: merchantKey(s.merchant) || undefined };
-    if(s.merchant) tx.note = s.merchant;
-    if(s.currency !== 'SAR'){ tx.origAmount = s.amount; tx.origCurrency = s.currency; tx.fxRate = +(amt/s.amount).toFixed(4); }
-    DB.cycles[key].transactions.push(tx);
-    if(tx.merchantKey) DB.merchantMap[tx.merchantKey] = catId;
-    finishSms(s, 'done');
-    await saveData();
-    renderAll();
-    const cat = findCategory(catId);
-    toast((refund?'استرداد على ':'تم التصنيف: ') + (cat?cat.label:''));
-  }
-
-  async function classifySmsIncome(smsId, source, cardEl){
-    const s = DB.smsInbox.find(x=>x.id===smsId);
-    if(!s) return;
-    if(!orderedKeys().length){ toast('ابدأ دورة (راتبًا) أولًا'); return; }
-    const amt = smsSarAmount(s, cardEl);
-    if(!(amt > 0)){ toast('اكتب المبلغ بالريال'); return; }
-    const key = cycleKeyForTs(s.ts);
-    addTopup(key, amt, source, s.ts, { smsId:s.id, smsText:s.text, note:s.merchant||undefined });
-    finishSms(s, 'done');
-    await saveData();
-    renderAll();
-    toast(source==='income' ? 'أُضيف كدخل للدورة' : 'أُضيف كتحويل (ليس دخلًا)');
-  }
-
-  async function ignoreSms(smsId){
-    const s = DB.smsInbox.find(x=>x.id===smsId);
-    if(!s) return;
-    finishSms(s, 'ignored');
-    await saveData();
-    renderAll();
-  }
-
-  function renderSmsList(){
-    const list = document.getElementById('smsList');
-    const items = pendingSms();
-    document.getElementById('smsCount').textContent = items.length ? items.length : '';
-    if(!items.length){
-      list.innerHTML = '<div class="rv-empty">لا توجد رسائل بانتظار التصنيف. الصق رسائل البنك أو استورد ملفها.</div>';
-      return;
-    }
-    const cats = getAllCategories();
-    list.innerHTML = items.map(s=>{
-      const d = new Date(s.ts);
-      const sugg = DB.merchantMap[merchantKey(s.merchant)];
-      const ordered = sugg ? cats.slice().sort((a,b)=>(b.id===sugg)-(a.id===sugg)) : cats;
-      const credit = s.kind === 'credit';
-      const kindLabel = credit ? (s.isRefund ? 'استرداد' : (s.isTransfer ? 'حوالة واردة' : 'وارد')) : (s.isTransfer ? 'حوالة صادرة' : 'خصم');
-      const foreign = s.currency !== 'SAR';
-      const catGrid = `<div class="sms-cats">${ordered.map(c=>`<div class="cat-btn${c.id===sugg?' sugg':''}" data-smscat="${c.id}"><span class="ic">${c.icon}</span><span class="lb">${esc(c.label)}</span></div>`).join('')}</div>`;
-      const jarOpts = (DB.savings.jars||[]).map(j=>`<option value="jar:${j.id}">${esc((j.icon||'')+' '+j.name)}</option>`).join('');
-      return `<div class="rv-card" data-sms="${s.id}">
-        <div class="rv-top">
-          <span class="rv-ic">📩</span>
-          <div class="rv-body">
-            <div class="rv-title"><span class="rv-amt mono" style="color:${credit?'var(--topup)':'var(--expense)'}">${credit?'+':'-'}${fmtNum(s.amount)} ${foreign?esc(s.currency):'ر.س'}</span>
-              <span class="kind-pill ${credit?'credit':'debit'}">${kindLabel}</span></div>
-            <div class="rv-sub">${s.merchant?esc(s.merchant)+' • ':''}${formatGregorian(d)} • ${formatTimeOnly(d)}${s.tsGuessed?' (تاريخ الاستيراد)':''}${sugg?' • 💡 مقترح: '+esc((findCategory(sugg)||{}).label||''):''}</div>
-          </div>
-          <span class="r-del" data-smsraw="1" title="النص الأصلي">⋯</span>
-        </div>
-        <div class="sms-raw">${esc(s.text)}</div>
-        ${foreign ? `<input type="text" inputmode="decimal" class="field" data-sar placeholder="المبلغ النهائي بالريال (شامل الرسوم)" style="margin:10px 0 0;">` : ''}
-        ${credit
-          ? `<div class="rv-actions">
-               <div class="btn positive" data-smsinc="income">دخل للدورة</div>
-               <div class="btn" data-smsinc="other">تحويل (ليس دخلًا)</div>
-               <div class="btn ghost" data-smsrefund="1">استرداد مصروف…</div>
-               <div class="btn ghost" data-smsign="1">تجاهل</div>
-             </div>
-             <div data-refundgrid style="display:none;"><div class="rv-sub" style="margin-top:8px;">اختر فئة المصروف المسترد:</div>${catGrid}</div>`
-          : `${catGrid}
-             <div class="rv-actions">
-               <div class="btn ghost" data-smsign="1">ليست مصروفًا / تجاهل</div>
-             </div>`}
-      </div>`;
-    }).join('');
-    list.querySelectorAll('[data-sms]').forEach(card=>{
-      const id = card.dataset.sms;
-      card.querySelector('[data-smsraw]').addEventListener('click', ()=> card.querySelector('.sms-raw').classList.toggle('show'));
-      card.querySelectorAll('[data-smscat]').forEach(b=> b.addEventListener('click', ()=> classifySmsExpense(id, b.dataset.smscat, card)));
-      card.querySelectorAll('[data-smsinc]').forEach(b=> b.addEventListener('click', ()=> classifySmsIncome(id, b.dataset.smsinc, card)));
-      const rf = card.querySelector('[data-smsrefund]');
-      if(rf) rf.addEventListener('click', ()=>{ const g = card.querySelector('[data-refundgrid]'); g.style.display = g.style.display==='none'?'block':'none'; });
-      card.querySelector('[data-smsign]').addEventListener('click', ()=> ignoreSms(id));
-    });
-  }
-
-  // ---------- smart data reviewer (rule-based alerts) ----------
-  function unlinkedTopups(){
-    const out = [];
-    Object.keys(DB.cycles).forEach(k=>{
-      DB.cycles[k].transactions.forEach(t=>{ if(t.type==='topup' && !t.source) out.push({t, key:k}); });
-    });
-    return out.sort((a,b)=>b.t.ts-a.t.ts);
-  }
-  // a jar withdrawal with the same amount within a week is very likely the same money
-  function matchJarWithdrawal(t){
-    let best = null;
-    (DB.savings.jars||[]).forEach(j=> (j.entries||[]).forEach(e=>{
-      if(e.linkTxId || e.amount >= 0) return;
-      if(Math.abs(-e.amount - t.amount) > 0.01) return;
-      const gap = Math.abs(e.ts - t.ts);
-      if(gap <= 7*86400000 && (!best || gap < best.gap)) best = {jar:j, entry:e, gap};
-    }));
-    return best;
-  }
-
-  function buildAlerts(){
-    const alerts = [];
-    const key = DB.currentCycleKey;
-    if(key){
-      const cur = DB.cycles[key];
-      const c = getCurrentCycle();
-      // 1) recurring commitments with no payment this cycle
-      expectedCommitments().forEach(({c:cm, amount})=>{
-        const dk = 'commit:'+cm.id+':'+key;
-        if(DB.dismissed[dk]) return;
-        alerts.push({ kind:'warn', icon:cm.icon||'💳',
-          title:'لم نجد دفعة «' + cm.name + '» لهذه الدورة، هل سُددت؟',
-          sub:'المبلغ المعتاد ' + fmtNum(amount) + ' ر.س — يُحسب ضمن الحد اليومي الآمن حتى تسجّله.',
-          actions:[{label:'تسجيل الدفعة', cls:'primary', fn:()=>{ switchScreen('commitments'); openCommitDetail(cm.id); }},
-                   {label:'ليست مستحقة هذه الدورة', cls:'ghost', fn:async()=>{ DB.dismissed[dk]=true; await saveData(); renderAll(); }}]
-        });
-      });
-      // 2) spending pace vs remaining budget until payday
-      const daysPassed = Math.max(Math.round((startOfDay(new Date()) - startOfDay(c.start))/86400000)+1, 1);
-      if(daysPassed >= 3){
-        const fixed = DB.billCategories || [];
-        const variable = cur.transactions.filter(t=>t.type==='expense' && t.category!==COMMIT_CAT.id && !fixed.includes(t.category)).reduce((s,t)=>s+t.amount,0);
-        const perDay = variable / daysPassed;
-        const left = daysUntilPayday();
-        const remaining = cur.budget - cycleExpenseTotal(key);
-        const expected = expectedCommitments().reduce((s,x)=>s+x.amount,0);
-        const projected = remaining - expected - perDay*left;
-        if(projected < 0){
-          alerts.push({ kind:'warn', icon:'⏱️',
-            title:'إذا استمر صرفك بهذا المعدل (' + fmtNum(perDay) + ' ر.س/يوم) قد تتجاوز ميزانيتك قبل الراتب بنحو ' + fmtNum(-projected) + ' ر.س',
-            sub:'باقٍ ' + left + ' يومًا حتى الراتب • المتبقي ' + fmtNum(remaining) + ' ر.س' + (expected? ' • التزامات متوقعة ' + fmtNum(expected) : '') });
-        }
-      }
-      // 3) category above its average of the last 3 completed cycles
-      const prev = completedKeys().slice(-3);
-      if(prev.length){
-        const totals = {};
-        cur.transactions.filter(t=>t.type==='expense' && t.category!==COMMIT_CAT.id).forEach(t=>{ totals[t.category]=(totals[t.category]||0)+t.amount; });
-        Object.keys(totals).forEach(id=>{
-          const avg = prev.reduce((s,k)=>s+catSpendInCycle(k,id),0) / prev.length;
-          if(avg > 0 && totals[id] > avg*1.3 && totals[id]-avg >= 200){
-            const cat = findCategory(id);
-            alerts.push({ kind:'info', icon:cat?cat.icon:'📈',
-              title:'إنفاق «' + (cat?cat.label:id) + '» أعلى من ' + (prev.length===1 ? 'الدورة السابقة' : 'متوسط آخر ' + prev.length + ' دورات'),
-              sub:fmtNum(totals[id]) + ' ر.س هذه الدورة مقابل متوسط ' + fmtNum(avg) + ' ر.س (+' + Math.round((totals[id]/avg-1)*100) + '%)' });
-          }
-        });
-      }
-    }
-    // 4) top-ups with no source: income or a transfer?
-    unlinkedTopups().forEach(({t, key:k})=>{
-      const m = matchJarWithdrawal(t);
-      const d = new Date(t.ts);
-      const actions = [];
-      if(m) actions.push({label:'نعم، اربطها بسحب «' + m.jar.name + '»', cls:'primary', fn:async()=>{
-        t.source='jar'; t.jarId=m.jar.id; t.jarEntryId=m.entry.id; m.entry.linkTxId=t.id;
-        await saveData(); renderAll(); toast('تم الربط — لن تُحسب دخلًا');
-      }});
-      actions.push({label:'دخل إضافي', cls: m?'':'positive', fn:async()=>{ t.source='income'; await saveData(); renderAll(); }});
-      actions.push({label:'تحويل من حساب آخر', cls:'', fn:async()=>{ t.source='other'; await saveData(); renderAll(); }});
-      alerts.push({ kind:'info', icon:'🔗',
-        title:'أضفت ' + fmtNum(t.amount) + ' ر.س للميزانية في ' + fmtShort(d) + (m ? '، هل مصدرها سحب «' + m.jar.name + '» بنفس المبلغ؟' : '، ما مصدرها؟'),
-        sub:'تحديد المصدر يمنع احتساب التحويل من المدخرات كدخل جديد.', actions });
-    });
-    return alerts;
-  }
-
-  function renderAlerts(){
-    const list = document.getElementById('alertList');
-    const alerts = buildAlerts();
-    if(!alerts.length){ list.innerHTML = '<div class="rv-empty">لا توجد تنبيهات حاليًا 👌</div>'; return alerts.length; }
-    list.innerHTML = alerts.map((a,i)=>`<div class="rv-card ${a.kind}">
-      <div class="rv-top"><span class="rv-ic">${a.icon}</span>
-        <div class="rv-body"><div class="rv-title">${esc(a.title)}</div>${a.sub?`<div class="rv-sub">${esc(a.sub)}</div>`:''}</div></div>
-      ${a.actions&&a.actions.length?`<div class="rv-actions">${a.actions.map((x,j)=>`<div class="btn ${x.cls}" data-al="${i}:${j}">${esc(x.label)}</div>`).join('')}</div>`:''}
-    </div>`).join('');
-    list.querySelectorAll('[data-al]').forEach(b=>{
-      const [i,j] = b.dataset.al.split(':').map(Number);
-      b.addEventListener('click', ()=> alerts[i].actions[j].fn());
-    });
-    return alerts.filter(a=>a.actions && a.actions.length).length;
-  }
-
-  function largeUndescribed(){
-    const out = [];
-    Object.keys(DB.cycles).forEach(k=> DB.cycles[k].transactions.forEach(t=>{ if(needsDescription(t)) out.push(t); }));
-    return out.sort((a,b)=>b.amount-a.amount);
-  }
-  function renderLargeList(){
-    const list = document.getElementById('largeList');
-    const items = largeUndescribed();
-    if(!items.length){ list.innerHTML = '<div class="rv-empty">كل العمليات الكبيرة موصوفة ✓</div>'; return; }
-    let allExp = 0;
-    Object.keys(DB.cycles).forEach(k=>{ allExp += cycleExpenseTotal(k); });
-    const sum = items.reduce((s,t)=>s+t.amount,0);
-    const shown = items.slice(0, 20);
-    list.innerHTML = `<div class="rv-sub" style="margin:0 2px 8px;">${items.length} عملية (≥ ${LARGE_TX} ر.س) بإجمالي ${fmtNum(sum)} ر.س${allExp>0?' — نحو '+Math.round(sum/allExp*100)+'% من كل مصروفاتك المسجلة':''}. وصفها يجعل التحليل أدق بكثير.</div>`
-      + shown.map(t=>{
-        const cat = findCategory(t.category);
-        return `<div class="rv-card" data-lg="${t.id}">
-          <div class="rv-top"><span class="rv-ic">${cat?cat.icon:'❔'}</span>
-            <div class="rv-body"><div class="rv-title"><span class="rv-amt mono" style="color:var(--expense)">-${fmtNum(t.amount)}</span> • ${esc(cat?cat.label:'غير مصنف')}</div>
-            <div class="rv-sub">${formatGregorian(new Date(t.ts))}</div></div></div>
-          <div class="rv-actions"><div class="btn primary" data-lgedit="1">وصفها</div><div class="btn ghost" data-lgok="1">واضحة، لا تحتاج</div></div>
-        </div>`;
-      }).join('')
-      + (items.length > shown.length ? `<div class="rv-empty">و${items.length-shown.length} عملية أخرى…</div>` : '');
-    list.querySelectorAll('[data-lg]').forEach(card=>{
-      const id = card.dataset.lg;
-      card.querySelector('[data-lgedit]').addEventListener('click', ()=> openTxEdit(id));
-      card.querySelector('[data-lgok]').addEventListener('click', async ()=>{
-        const f = findTx(id); if(f){ f.tx.reviewed = true; await saveData(); renderAll(); }
-      });
-    });
-  }
-
-  function renderReview(){
-    renderSmsList();
-    const actionable = renderAlerts();
-    renderLargeList();
-    const n = pendingSms().length + actionable + largeUndescribed().length;
-    const b = document.getElementById('reviewBadge');
-    b.textContent = n > 99 ? '99+' : n;
-    b.classList.toggle('show', n > 0);
-  }
-
   function renderAll(){
     renderHeader();
+    renderCatGrid();
     renderHistory();
     renderSavings();
     renderCommitments();
     renderFinancial();
-    renderReview();
   }
 
   // ---------- actions ----------
@@ -2578,9 +2041,14 @@
     renderAmountDisplay();
     saveData();
     renderAll();
-    toast('تم خصم ' + fmtNum(amt) + ' ر.س — ' + cat.label);
-    // big amounts: ask for a short description right away (optional — can be closed)
-    if(amt >= LARGE_TX) openTxEdit(tx.id, 'large');
+    const ls = limitStatus(cat.id);
+    if(ls && ls.pct >= 100){
+      toast('🚫 ' + (ls.spent > ls.limit ? 'تجاوزت' : 'وصلت') + ' حد «' + cat.label + '»: ' + fmtNum(Math.round(ls.spent)) + ' من ' + fmtNum(ls.limit) + ' ر.س', 4500);
+    } else if(ls && ls.pct >= 80){
+      toast('⚠️ اقتربت من حد «' + cat.label + '» — باقٍ ' + fmtNum(Math.round(ls.left)) + ' ر.س من ' + fmtNum(ls.limit), 4000);
+    } else {
+      toast('تم خصم ' + fmtNum(amt) + ' ر.س — ' + cat.label);
+    }
   }
 
   // ---------- transaction details sheet ----------
@@ -2594,13 +2062,7 @@
     const cat = findCategory(t.category);
     document.getElementById('txEditTitle').textContent = (cat ? cat.icon + ' ' : '') + 'تفاصيل العملية — ' + fmtNum(Math.abs(t.amount)) + ' ر.س';
     const hint = document.getElementById('txEditHint');
-    if(reason === 'large'){
-      hint.style.display = 'block';
-      hint.textContent = 'عملية كبيرة (' + fmtNum(t.amount) + ' ر.س). أضف وصفًا مختصرًا الآن، أو أغلق وستجدها لاحقًا في تبويب المراجعة.';
-    } else if(t.smsText){
-      hint.style.display = 'block';
-      hint.textContent = '📩 ' + t.smsText;
-    } else hint.style.display = 'none';
+    hint.style.display = 'none';
     document.getElementById('txAmountWrap').style.display = isCommit ? 'none' : 'block';
     document.getElementById('txCatWrap').style.display = isCommit ? 'none' : 'block';
     document.getElementById('txAmountInput').value = Math.abs(t.amount);
@@ -2608,7 +2070,6 @@
     document.getElementById('txDateInput').value = dateKey(new Date(t.ts));
     renderTxChips();
     document.getElementById('txEditOverlay').classList.add('show');
-    if(reason === 'large') setTimeout(()=>document.getElementById('txNoteInput').focus(), 250);
   }
 
   function renderTxChips(){
@@ -2754,19 +2215,36 @@
   }
 
   // start a brand-new salary cycle: closes current month, carries leftover (±) if enabled
-  function beginSalaryCycle(salaryAmt, includeCarry){
-    const now = new Date();
+  function beginSalaryCycle(salaryAmt, includeCarry, startTs){
+    const now = new Date(startTs || Date.now());
     const leftover = includeCarry ? cycleLeftover(DB.currentCycleKey) : 0;
-    const key = 'c-' + dateKey(now) + '-' + Date.now().toString(36).slice(-5);
+    const key = 'c-' + dateKey(now) + '-' + Math.random().toString(36).slice(2,7);
     DB.cycles[key] = {
       budget: salaryAmt + leftover,
       transactions: [],
       salary: salaryAmt,
       carry: leftover,
-      startTs: now.getTime()
+      startTs: now.getTime(),
+      auto: !!startTs
     };
     DB.currentCycleKey = key;
     viewCycleKey = null;
+    deductMonthlyCommitments(key, now.getTime());
+  }
+
+  // each commitment's monthly instalment is taken from the new cycle as soon as it starts
+  function deductMonthlyCommitments(key, ts){
+    const data = DB.cycles[key];
+    (DB.commitments||[]).forEach(c=>{
+      const monthly = c.monthly || 0;
+      if(monthly <= 0) return;
+      const amt = isOngoing(c) ? monthly : Math.min(monthly, commitRemaining(c));
+      if(amt <= 0) return;
+      const payId = uid('p');
+      c.payments = c.payments || [];
+      c.payments.push({ id:payId, amount:amt, ts, auto:true });
+      data.transactions.push({ id:uid('t'), type:'expense', amount:amt, category:COMMIT_CAT.id, commitmentId:c.id, payId, ts, createdTs:Date.now(), auto:true });
+    });
   }
 
   function openBudgetOverlay(mode){
@@ -2906,6 +2384,7 @@
       return `<div class="cm-row">
         <span class="ic">${c.icon}</span>
         <span class="lb">${c.label}</span>
+        <span class="cm-bill${catLimit(c.id)?' on':''}" data-limcat="${c.id}">${catLimit(c.id) ? 'حد ' + fmtNum(catLimit(c.id)) : '+ حد'}</span>
         <span class="cm-bill${bill?' on':''}" data-billcat="${c.id}" title="اعتبارها فاتورة شهرية ثابتة">${bill?'★ فاتورة':'☆ فاتورة'}</span>
         <span class="cm-del" data-delcat="${c.id}">✕</span>
       </div>`;
@@ -2915,6 +2394,19 @@
     });
     list.querySelectorAll('[data-billcat]').forEach(btn=>{
       btn.addEventListener('click', ()=> toggleBill(btn.dataset.billcat));
+    });
+    list.querySelectorAll('[data-limcat]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const cat = findCategory(btn.dataset.limcat);
+        const cur = catLimit(btn.dataset.limcat);
+        const v = prompt('الحد الشهري لـ «' + cat.label + '» بالريال (اتركه فارغًا لإلغاء الحد)', cur || '');
+        if(v === null) return;
+        const n = parseFloat(normNum(v)) || 0;
+        if(n > 0) DB.catLimits[cat.id] = n; else delete DB.catLimits[cat.id];
+        await saveData();
+        renderCatManageList(); renderCatGrid();
+        toast(n > 0 ? 'حد «' + cat.label + '»: ' + fmtNum(n) + ' ر.س لكل دورة' : 'أُلغي الحد');
+      });
     });
   }
 
@@ -3043,13 +2535,20 @@
       sel.appendChild(opt);
     });
     sel.value = viewCycleKey || '';
-    document.getElementById('paydaySelect').value = DB.settings.payday ? String(DB.settings.payday) : '';
+    document.getElementById('incomeRowVal').textContent = autoSalaryOn() ? (fmtNum(DB.settings.income) + ' • يوم ' + DB.settings.payday + ' ›') : 'غير محدد ›';
   }
 
   // ---------- init ----------
   async function init(){
     await loadData();
+    if(runAutoSalary()){ await saveData(); setTimeout(()=>toast('بدأت دورة جديدة: أُضيف الراتب وخُصمت الالتزامات'), 400); }
     applyTheme();
+    document.addEventListener('visibilitychange', async ()=>{
+      if(document.visibilityState === 'visible' && runAutoSalary()){
+        await saveData(); renderAll(); renderCatGrid();
+        toast('بدأت دورة جديدة: أُضيف الراتب وخُصمت الالتزامات');
+      }
+    });
 
     renderCatGrid();
     renderAmountDisplay();
@@ -3118,12 +2617,29 @@
     document.getElementById('rowExportBackup').addEventListener('click', ()=> exportBackup(false));
     document.getElementById('rowExportFinance').addEventListener('click', ()=> exportBackup(true));
     const pdSel = document.getElementById('paydaySelect');
-    pdSel.innerHTML = '<option value="">تلقائي (٣٠ يومًا)</option>' +
-      Array.from({length:31}, (_,i)=>`<option value="${i+1}">يوم ${i+1}</option>`).join('');
-    pdSel.value = DB.settings.payday ? String(DB.settings.payday) : '';
-    pdSel.addEventListener('change', async ()=>{
-      DB.settings.payday = pdSel.value ? +pdSel.value : null;
-      await saveData(); renderAll();
+    pdSel.innerHTML = '<option value="">— اختر اليوم —</option>' +
+      Array.from({length:31}, (_,i)=>`<option value="${i+1}">يوم ${i+1} من كل شهر</option>`).join('');
+    document.getElementById('rowIncome').addEventListener('click', ()=>{
+      document.getElementById('settingsOverlay').classList.remove('show');
+      document.getElementById('incomeInput').value = DB.settings.income || '';
+      pdSel.value = DB.settings.payday ? String(DB.settings.payday) : '';
+      document.getElementById('incomeOverlay').classList.add('show');
+    });
+    document.getElementById('closeIncome').addEventListener('click', ()=> document.getElementById('incomeOverlay').classList.remove('show'));
+    document.getElementById('btnIncomeSave').addEventListener('click', async ()=>{
+      const inc = parseInput('incomeInput');
+      const pd = pdSel.value ? +pdSel.value : null;
+      if(inc > 0 && !pd){ toast('اختر يوم نزول الراتب'); return; }
+      const wasOn = autoSalaryOn();
+      DB.settings.income = inc > 0 ? inc : 0;
+      DB.settings.payday = pd;
+      // only paydays from now on start cycles automatically
+      if(autoSalaryOn() && (!wasOn || !DB.settings.autoFrom)) DB.settings.autoFrom = Date.now();
+      runAutoSalary();
+      await saveData();
+      document.getElementById('incomeOverlay').classList.remove('show');
+      renderAll(); renderCatGrid();
+      toast(autoSalaryOn() ? ('سيُضاف ' + fmtNum(inc) + ' ر.س تلقائيًا يوم ' + pd + ' من كل شهر') : 'تم الحفظ');
     });
 
     // transaction details
@@ -3139,44 +2655,12 @@
       txEditId = null;
     });
 
-    // bank SMS
-    document.getElementById('btnSmsPaste').addEventListener('click', ()=>{
-      document.getElementById('smsPasteInput').value = '';
-      document.getElementById('smsPasteOverlay').classList.add('show');
-    });
-    document.getElementById('closeSmsPaste').addEventListener('click', ()=> document.getElementById('smsPasteOverlay').classList.remove('show'));
-    document.getElementById('btnSmsClipboard').addEventListener('click', async ()=>{
-      try{
-        const t = await navigator.clipboard.readText();
-        const ta = document.getElementById('smsPasteInput');
-        ta.value = (ta.value ? ta.value + '\n\n' : '') + (t||'');
-      }catch(e){ toast('تعذر الوصول للحافظة — الصق يدويًا'); }
-    });
-    document.getElementById('btnSmsParse').addEventListener('click', async ()=>{
-      const n = await importSmsText(document.getElementById('smsPasteInput').value);
-      if(n) document.getElementById('smsPasteOverlay').classList.remove('show');
-    });
-    document.getElementById('btnSmsFile').addEventListener('click', ()=> document.getElementById('smsFileInput').click());
-    document.getElementById('smsFileInput').addEventListener('change', (e)=>{
-      const file = e.target.files[0];
-      e.target.value = '';
-      if(!file) return;
-      const r = new FileReader();
-      r.onload = ()=> importSmsText(r.result);
-      r.readAsText(file);
-    });
-    document.getElementById('btnSmsHelp').addEventListener('click', ()=> document.getElementById('smsHelpOverlay').classList.add('show'));
-    document.getElementById('closeSmsHelp').addEventListener('click', ()=> document.getElementById('smsHelpOverlay').classList.remove('show'));
-
     // jar withdraw → budget link switch
     document.getElementById('jarToBudgetSwitch').addEventListener('click', ()=>{
       jarToBudget = !jarToBudget;
       document.getElementById('jarToBudgetSwitch').classList.toggle('on', jarToBudget);
     });
 
-    document.getElementById('cmpExclToggle').addEventListener('click', ()=>{
-      cmpExcludeOccasions = !cmpExcludeOccasions; renderFinCompare();
-    });
     document.getElementById('rowImportBackup').addEventListener('click', ()=>{
       document.getElementById('importFileInput').click();
     });
@@ -3230,6 +2714,13 @@
     });
     document.getElementById('btnCommitPayConfirm').addEventListener('click', confirmCommitPay);
     document.getElementById('btnCommitDelete').addEventListener('click', deleteCommitment);
+    document.getElementById('btnCommitMonthlySave').addEventListener('click', async ()=>{
+      const c = (DB.commitments||[]).find(x=>x.id===activeCommitId);
+      if(!c) return;
+      c.monthly = parseInput('commitMonthlyEdit');
+      await saveData(); renderCommitments();
+      toast(c.monthly > 0 ? 'سيُخصم ' + fmtNum(c.monthly) + ' ر.س تلقائيًا مع كل راتب' : 'أُوقف الخصم التلقائي');
+    });
     document.getElementById('closeCommitDetail').addEventListener('click', ()=>{
       document.getElementById('commitDetailOverlay').classList.remove('show');
       activeCommitId = null;
