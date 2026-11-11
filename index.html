@@ -348,7 +348,7 @@
   /* category management */
   .cm-row{display:flex; align-items:center; gap:10px; padding:10px 2px; border-bottom:1px solid var(--line);}
   .cm-row .ic{font-size:18px; width:24px; text-align:center;}
-  .cm-row .lb{flex:1; font-size:13.5px;}
+  .cm-row .lb{flex:1; font-size:13.5px; min-width:0;}
   .cm-row .tag{font-size:10.5px; color:var(--text-3);}
   .cm-bill{font-size:10.5px; padding:4px 9px; border-radius:20px; border:1px solid var(--line); color:var(--text-3); cursor:pointer; flex:0 0 auto; white-space:nowrap;}
   .cm-bill.on{color:var(--gold); border-color:var(--gold-dim); background:rgba(212,168,87,.10);}
@@ -393,6 +393,21 @@
   .chip.add{border-style:dashed;}
   .chip.sugg{border-color:var(--topup); color:var(--topup);}
 
+  .backup-banner{display:none; align-items:center; gap:8px; background:var(--bg-raised); border:1px solid var(--gold-dim); border-radius:var(--radius-md); padding:9px 12px; margin-bottom:10px; font-size:12.5px; color:var(--text-1);}
+  .backup-banner.show{display:flex;}
+  .backup-banner span:first-child{flex:1;}
+  .bb-btn{font-size:12px; padding:5px 10px; border-radius:20px; border:1px solid var(--line); color:var(--text-2); cursor:pointer; white-space:nowrap;}
+  .bb-btn.primary{background:var(--gold); color:#1B1305; border-color:var(--gold); font-weight:700;}
+  .undo-bar{position:fixed; bottom:94px; left:50%; transform:translateX(-50%); width:calc(100% - 32px); max-width:398px;
+    display:flex; align-items:center; gap:10px; background:var(--bg-raised); border:1px solid var(--line); color:var(--text-1);
+    padding:10px 14px; border-radius:16px; font-size:13px; z-index:81; opacity:0; pointer-events:none; transition:opacity .2s;}
+  .undo-bar.show{opacity:1; pointer-events:auto;}
+  .undo-bar #undoText{flex:1; line-height:1.4;}
+  .undo-btn{color:var(--gold); font-weight:700; cursor:pointer; padding:4px 8px; white-space:nowrap;}
+  html.privacy .mono, html.privacy .r-amt, html.privacy .cd-amt{filter:blur(7px);}
+  html.privacy .cat-btn .lim{visibility:hidden;}
+  .sum-list{font-size:13px; line-height:1.8; margin:4px 0 12px; padding-inline-start:18px;}
+  .cm-chips{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;}
   .help-note{font-size:11.5px; color:var(--text-2); line-height:1.6; background:var(--bg-panel-2); border-radius:10px; padding:10px; margin-bottom:10px;}
   .cat-btn .lim{font-size:9px; color:var(--text-3);}
   .cat-btn .lim.warn{color:var(--gold);}
@@ -412,7 +427,10 @@
     <div>
       <div class="eyebrow" id="cycleLabel">— — —</div>
     </div>
-    <div class="gear" id="btnSettings">⚙︎</div>
+    <div style="display:flex; gap:8px;">
+      <div class="gear" id="btnPrivacy" title="إخفاء المبالغ">👁</div>
+      <div class="gear" id="btnSettings">⚙︎</div>
+    </div>
   </div>
 
   <div class="display-card" id="display-card">
@@ -440,6 +458,11 @@
 
   <!-- HOME (calculator) SCREEN -->
   <div class="screen active" id="screen-calc">
+    <div class="backup-banner" id="backupBanner">
+      <span id="backupBannerText">💾 لم تنزّل نسخة احتياطية منذ فترة</span>
+      <span class="bb-btn primary" id="btnBackupNow">تنزيل</span>
+      <span class="bb-btn" id="btnBackupLater">لاحقًا</span>
+    </div>
     <div class="amount-row">
       <span class="amt placeholder" id="amtDisplay">أدخل المبلغ</span>
       <span class="mode-pill expense" id="modePill">خصم</span>
@@ -622,6 +645,10 @@
     <input type="text" inputmode="decimal" id="jarAmountInput" class="field" placeholder="0">
     <label class="fld-l">ملاحظة (اختياري)</label>
     <input type="text" id="jarNoteInput" class="field" placeholder="مثال: ادخار شهر يوليو">
+    <div id="jarDepSourceWrap" style="display:none;">
+      <label class="fld-l">من أين هذا المبلغ؟</label>
+      <div class="chip-row" id="jarDepSourceChips"></div>
+    </div>
     <div class="row" id="jarToBudgetRow" style="display:none; padding:4px 2px 14px; border:none; font-size:13px;">
       <span>تحويل المبلغ إلى ميزانية الدورة الحالية<br><span style="font-size:11px; color:var(--text-3);">حركة واحدة مرتبطة: تُسحب من الوعاء وتُضاف للميزانية</span></span>
       <div class="switch on" id="jarToBudgetSwitch"></div>
@@ -645,6 +672,8 @@
     <input type="text" inputmode="decimal" id="jarGoalInput" class="field" placeholder="0">
     <label class="fld-l" id="jarStartLabel">الرصيد الحالي في الوعاء (اختياري)</label>
     <input type="text" inputmode="decimal" id="jarStartInput" class="field" placeholder="0">
+    <label class="fld-l">خصم شهري تلقائي من الراتب (اختياري)</label>
+    <input type="text" inputmode="decimal" id="jarMonthlyInput" class="field" placeholder="مثال: 1000">
     <div class="budget-actions">
       <div class="btn primary" id="btnJarEditConfirm">حفظ الوعاء</div>
     </div>
@@ -708,11 +737,14 @@
 <div class="overlay" id="incomeOverlay">
   <div class="sheet">
     <h3>الدخل الشهري ويوم الراتب</h3>
-    <div class="help-note">في هذا اليوم من كل شهر تبدأ دورة جديدة تلقائيًا: يُضاف الدخل، ويُرحَّل المتبقي من الدورة السابقة، وتُخصم أقساط الالتزامات الشهرية.</div>
+    <div class="help-note">في هذا اليوم من كل شهر تبدأ دورة جديدة تلقائيًا: يُضاف الدخل، ويُرحَّل المتبقي من الدورة السابقة، وتُخصم أقساط الالتزامات والادخار الشهري.</div>
     <label class="fld-l">الدخل الشهري (ر.س)</label>
     <input type="text" inputmode="decimal" id="incomeInput" class="field" placeholder="0">
     <label class="fld-l">يوم نزول الراتب</label>
     <select id="paydaySelect" class="field"></select>
+    <label class="fld-l">حد الصرف الشهري للاستعمال (اختياري — أقل من الراتب)</label>
+    <input type="text" inputmode="decimal" id="spendLimitInput" class="field" placeholder="مثال: 6000">
+    <div class="help-note">يُحسب «المتاح يوميًا» من هذا الحد لا من الراتب كله. لا تدخل فيه الالتزامات والفواتير والمصروفات الاستثنائية.</div>
     <div class="budget-actions">
       <div class="btn primary" id="btnIncomeSave">حفظ</div>
     </div>
@@ -749,6 +781,18 @@
   </div>
 </div>
 
+<!-- CYCLE SUMMARY SHEET -->
+<div class="overlay" id="summaryOverlay">
+  <div class="sheet">
+    <h3 id="summaryTitle">ملخص الدورة الماضية</h3>
+    <div id="summaryBody"></div>
+    <div class="budget-actions" style="margin-top:6px;">
+      <div class="btn primary" id="btnSummaryOk">تمام</div>
+    </div>
+  </div>
+</div>
+
+<div class="undo-bar" id="undoBar"><span id="undoText"></span><span class="undo-btn" id="undoBtn">تراجع</span></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -818,7 +862,8 @@
   let txEditId = null;          // transaction open in the details sheet
   let txEditDraft = null;       // {category, who, occasion} being edited
   let topupSource = null;       // 'income' | 'other' | 'jar:<id>' for "إضافة للرصيد"
-  let jarToBudget = true;       // jar withdraw → linked top-up of current cycle
+  let jarToBudget = true;
+  let jarDepSource = null;      // 'budget' | 'outside' for a deposit during a cycle       // jar withdraw → linked top-up of current cycle
 
   const SCHEMA_VERSION = 2;
   const DEFAULT_PEOPLE = ['أنا','العائلة','الأطفال'];
@@ -843,6 +888,7 @@
     migrateSavings();
     if(!Array.isArray(DB.commitments)) DB.commitments = [];
     if(!Array.isArray(DB.billCategories)) DB.billCategories = DEFAULT_BILLS.slice();
+    if(!Array.isArray(DB.exceptionalCategories)) DB.exceptionalCategories = [];
     if(!DB.catLimits || typeof DB.catLimits !== 'object') DB.catLimits = {};
     // when each limit started: unused budget rolls over only from cycles after that
     if(!DB.catLimitsSince || typeof DB.catLimitsSince !== 'object') DB.catLimitsSince = {};
@@ -976,8 +1022,18 @@
     return new Date(startOfDay(c.start).getTime() + (cycleLengthDays(key)-1)*86400000);
   }
   // day-to-day spending only: commitments and fixed bills are excluded
+  // day-to-day spending only: commitments, fixed bills and exceptional categories
+  // (holidays, a trip…) are excluded
   function isVariableSpend(t){
-    return t.type==='expense' && t.category!==COMMIT_CAT.id && !(DB.billCategories||[]).includes(t.category);
+    return t.type==='expense' && t.category!==COMMIT_CAT.id && !isBill(t.category) && !isExceptional(t.category);
+  }
+  function isExceptional(id){ return (DB.exceptionalCategories||[]).includes(id); }
+  async function toggleExceptional(id){
+    if(isExceptional(id)) DB.exceptionalCategories = DB.exceptionalCategories.filter(x=>x!==id);
+    else DB.exceptionalCategories.push(id);
+    await saveData();
+    renderCatManageList();
+    renderAll();
   }
   // bills not yet paid this cycle, estimated from their average in past cycles
   function expectedBillsLeft(key){
@@ -1032,7 +1088,7 @@
     else DB.billCategories.push(id);
     await saveData();
     renderCatManageList();
-    renderFinancial();
+    renderAll();
   }
 
   function applyTheme(){
@@ -1280,10 +1336,17 @@
     const variable = data.transactions.filter(isVariableSpend).reduce((s,t)=>s+t.amount,0);
     const avgSpentPerDay = variable / daysPassed;
     const billsLeft = isCurrent ? expectedBillsLeft(c.key) : 0;
-    const avgAvailablePerDay = isCurrent ? (remaining - billsLeft) / daysLeft : remaining;
-    document.getElementById('rateSpentLabel').innerHTML = 'معدل الصرف اليومي<br>(هذه الدورة، بدون الالتزامات والفواتير)';
+    // with a monthly spending limit, "available" comes from that limit (never more than the real balance)
+    const spendLimit = DB.settings.spendLimit > 0 ? DB.settings.spendLimit : 0;
+    let pool = remaining - billsLeft;
+    if(spendLimit) pool = Math.min(spendLimit - variable, pool);
+    const avgAvailablePerDay = isCurrent ? pool / daysLeft : remaining;
+    if(spendLimit){
+      document.getElementById('remainingSub').textContent = 'من أصل ' + fmtNum(data.budget) + ' ر.س • حد الصرف: ' + fmtNum(Math.round(variable)) + ' من ' + fmtNum(spendLimit);
+    }
+    document.getElementById('rateSpentLabel').innerHTML = 'معدل الصرف اليومي<br>(بدون الالتزامات والفواتير والاستثنائي)';
     document.getElementById('safeDailyLabel').innerHTML = isCurrent
-      ? 'المتاح يوميًا<br>(' + daysLeft + ' يومًا حتى الراتب' + (billsLeft>0 ? '، بعد حجز ~' + fmtNum(Math.round(billsLeft)) + ' للفواتير' : '') + ')'
+      ? 'المتاح يوميًا<br>(' + daysLeft + ' يومًا حتى الراتب' + (spendLimit ? '، من حد الصرف' : (billsLeft>0 ? '، بعد حجز ~' + fmtNum(Math.round(billsLeft)) + ' للفواتير' : '')) + ')'
       : 'المتبقي في نهاية الدورة<br>&nbsp;';
 
     document.getElementById('avgSpentPerDay').textContent = fmtNum(avgSpentPerDay) + ' ر.س';
@@ -1295,7 +1358,7 @@
   function renderCatGrid(){
     const grid = document.getElementById('catGrid');
     grid.innerHTML = '';
-    getAllCategories().forEach(cat=>{
+    orderedCategories().forEach(cat=>{
       const el = document.createElement('div');
       el.className = 'cat-btn';
       el.dataset.cat = cat.id;
@@ -1417,6 +1480,16 @@
     rows.sort((a,b)=> b.ts - a.ts);
 
     wrap.innerHTML = rows.map(r=>{
+      if(r.kind === 'topup' && r.tx.type === 'save'){
+        const t = r.tx, j = findJar(t.jarId);
+        const time = new Date(t.ts).toLocaleString('ar-SA', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
+        return `<div class="r-row" data-id="${t.id}">
+          <span class="ic">${j ? (j.icon||'🫙') : '🫙'}</span>
+          <div class="r-info"><div class="r-cat">ادخار في: ${esc(j ? j.name : 'وعاء')}</div><div class="r-time">${time}${t.auto?' • تلقائي مع الراتب':''}</div></div>
+          <span class="r-amt mono" style="color:var(--gold)">-${fmtNum(t.amount)}</span>
+          <span class="r-del" data-del="${t.id}">✕</span>
+        </div>`;
+      }
       if(r.kind === 'topup'){
         const t = r.tx;
         const time = new Date(t.ts).toLocaleString('ar-SA', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
@@ -1543,6 +1616,7 @@
             <div class="jar-name">${j.icon||'🫙'} ${j.name} ${reached?'<span class="jar-done">✓ تحقّق</span>':''}</div>
             <div class="jar-figs"><b class="mono">${fmtNum(j.balance)}</b> / <span class="mono">${fmtNum(j.goal)}</span> ر.س</div>
             <div class="jar-sub">${reached ? 'وصلت للهدف 🎉' : ('باقٍ ' + fmtNum(remaining) + ' ر.س للهدف')}</div>
+            ${j.monthly > 0 && !reached ? `<div class="jar-sub">🔁 يُخصم ${fmtNum(j.monthly)} ر.س تلقائيًا مع كل راتب</div>` : ''}
           </div>
         </div>
         <div class="jar-actions">
@@ -1559,6 +1633,28 @@
 
   function findJar(id){ return (DB.savings.jars||[]).find(j=>j.id===id) || null; }
 
+  // money moved from the cycle budget into a jar: ONE linked movement (budget down, jar up)
+  function saveToJar(key, jar, amt, ts, note, auto){
+    const data = ensureCycle(key);
+    ts = ts || Date.now();
+    const tx = { id:uid('t'), type:'save', amount:amt, jarId:jar.id, ts, createdTs:Date.now() };
+    if(auto) tx.auto = true;
+    const entry = { id:uid('s'), amount:amt, note: note || (auto ? 'خصم شهري تلقائي من الراتب' : 'من ميزانية الدورة'), ts, linkTxId:tx.id };
+    tx.jarEntryId = entry.id;
+    jar.entries = jar.entries || [];
+    jar.entries.push(entry);
+    jar.balance = (jar.balance||0) + amt;
+    data.budget -= amt;
+    data.transactions.push(tx);
+    return tx;
+  }
+  function renderJarDepSourceChips(){
+    const wrap = document.getElementById('jarDepSourceChips');
+    const opts = [{v:'budget', l:'💼 من ميزانية الدورة (يُخصم منها)'}, {v:'outside', l:'🎁 من خارج الدخل'}];
+    wrap.innerHTML = opts.map(o=>`<span class="chip${jarDepSource===o.v?' sel':''}" data-dsrc="${o.v}">${o.l}</span>`).join('');
+    wrap.querySelectorAll('[data-dsrc]').forEach(el=> el.addEventListener('click', ()=>{ jarDepSource = el.dataset.dsrc; renderJarDepSourceChips(); }));
+  }
+
   function openJarTxn(jarId, mode){
     activeJarId = jarId; jarTxnMode = mode;
     const jar = findJar(jarId);
@@ -1572,6 +1668,10 @@
     row.style.display = canLink ? 'flex' : 'none';
     jarToBudget = canLink;
     document.getElementById('jarToBudgetSwitch').classList.toggle('on', jarToBudget);
+    const askSource = mode==='deposit' && !!DB.currentCycleKey;
+    document.getElementById('jarDepSourceWrap').style.display = askSource ? 'block' : 'none';
+    jarDepSource = null;
+    if(askSource) renderJarDepSourceChips();
     document.getElementById('jarTxnOverlay').classList.add('show');
   }
 
@@ -1593,8 +1693,19 @@
       toast('تم تحويل ' + fmtNum(amt) + ' ر.س من الوعاء إلى الميزانية');
       return;
     }
+    if(jarTxnMode==='deposit' && DB.currentCycleKey){
+      if(!jarDepSource){ toast('اختر مصدر المبلغ: من الميزانية أو من خارج الدخل'); return; }
+      if(jarDepSource==='budget'){
+        saveToJar(DB.currentCycleKey, jar, amt, Date.now(), note);
+        await saveData();
+        document.getElementById('jarTxnOverlay').classList.remove('show');
+        renderAll();
+        toast('تم ادخار ' + fmtNum(amt) + ' ر.س وخصمها من ميزانية الدورة');
+        return;
+      }
+    }
     jar.entries = jar.entries || [];
-    jar.entries.push({ id:'s'+Date.now()+Math.random().toString(36).slice(2,6), amount:signed, note, ts:Date.now() });
+    jar.entries.push({ id:'s'+Date.now()+Math.random().toString(36).slice(2,6), amount:signed, note: note || (jarTxnMode==='deposit' && DB.currentCycleKey ? 'من خارج الدخل' : ''), ts:Date.now() });
     jar.balance = (jar.balance||0) + signed;
     await saveData();
     document.getElementById('jarTxnOverlay').classList.remove('show');
@@ -1624,6 +1735,7 @@
     document.getElementById('jarEditTitle').textContent = jar ? 'تعديل الوعاء' : 'وعاء جديد';
     document.getElementById('jarNameInput').value = jar ? jar.name : '';
     document.getElementById('jarGoalInput').value = jar ? (jar.goal||'') : '';
+    document.getElementById('jarMonthlyInput').value = jar && jar.monthly ? jar.monthly : '';
     const startInput = document.getElementById('jarStartInput');
     const startLabel = document.getElementById('jarStartLabel');
     const histWrap = document.getElementById('jarHistoryWrap');
@@ -1667,13 +1779,15 @@
     if(!e) return;
     const linked = e.linkTxId ? findTx(e.linkTxId) : null;
     if(!confirm(linked
-      ? 'هذه الحركة تحويل مرتبط بميزانية الدورة. حذفها يعيد المبلغ للوعاء ويخصمه من الميزانية. متابعة؟'
+      ? (linked.tx.type === 'save'
+          ? 'هذا ادخار من ميزانية الدورة. حذفه يعيد المبلغ إلى الميزانية. متابعة؟'
+          : 'هذه الحركة تحويل مرتبط بميزانية الدورة. حذفها يعيد المبلغ للوعاء ويخصمه من الميزانية. متابعة؟')
       : 'حذف هذه الحركة؟ سيتعدّل رصيد الوعاء.')) return;
     jar.balance = (jar.balance||0) - e.amount;
     jar.entries = jar.entries.filter(x=>x.id!==entryId);
     if(linked){
       const cyc = DB.cycles[linked.key];
-      cyc.budget -= linked.tx.amount;
+      cyc.budget += linked.tx.type === 'save' ? linked.tx.amount : -linked.tx.amount;
       cyc.transactions = cyc.transactions.filter(t=>t.id!==linked.tx.id);
     }
     await saveData();
@@ -1683,17 +1797,18 @@
   async function confirmJarEdit(){
     const name = document.getElementById('jarNameInput').value.trim();
     const goal = parseInput('jarGoalInput');
+    const monthly = parseInput('jarMonthlyInput');
     if(!name){ toast('اكتب اسم الوعاء'); return; }
     if(goal <= 0){ toast('أدخل المبلغ المستهدف'); return; }
     if(jarEditId){
       const jar = findJar(jarEditId);
-      if(jar){ jar.name = name; jar.goal = goal; jar.icon = selectedJarIcon; }
+      if(jar){ jar.name = name; jar.goal = goal; jar.icon = selectedJarIcon; jar.monthly = monthly; }
       toast('تم تحديث الوعاء');
     } else {
       const start = parseInput('jarStartInput');
       const id = 'j'+Date.now()+Math.random().toString(36).slice(2,5);
       DB.savings.jars.push({
-        id, name, goal, icon:selectedJarIcon, balance:start,
+        id, name, goal, icon:selectedJarIcon, balance:start, monthly,
         entries: start>0 ? [{id:'s'+Date.now()+Math.random().toString(36).slice(2,6), amount:start, note:'رصيد ابتدائي', ts:Date.now()}] : []
       });
       toast('تمت إضافة الوعاء');
@@ -2040,6 +2155,7 @@
   }
 
   function renderAll(){
+    renderBackupBanner();
     renderHeader();
     renderCatGrid();
     renderHistory();
@@ -2063,13 +2179,108 @@
     saveData();
     renderAll();
     const ls = limitStatus(cat.id);
+    let msg = 'تم خصم ' + fmtNum(amt) + ' ر.س — ' + cat.label;
     if(ls && ls.pct >= 100){
-      toast('🚫 ' + (ls.spent > ls.limit ? 'تجاوزت' : 'وصلت') + ' حد «' + cat.label + '»: ' + fmtNum(Math.round(ls.spent)) + ' من ' + fmtNum(ls.limit) + ' ر.س', 4500);
+      msg = '🚫 ' + (ls.spent > ls.limit ? 'تجاوزت' : 'وصلت') + ' حد «' + cat.label + '»: ' + fmtNum(Math.round(ls.spent)) + ' من ' + fmtNum(ls.limit) + ' ر.س';
     } else if(ls && ls.pct >= 80){
-      toast('⚠️ اقتربت من حد «' + cat.label + '» — باقٍ ' + fmtNum(Math.round(ls.left)) + ' ر.س من ' + fmtNum(ls.limit), 4000);
-    } else {
-      toast('تم خصم ' + fmtNum(amt) + ' ر.س — ' + cat.label);
+      msg = '⚠️ اقتربت من حد «' + cat.label + '» — باقٍ ' + fmtNum(Math.round(ls.left)) + ' ر.س من ' + fmtNum(ls.limit);
     }
+    showUndo(msg, tx.id, ls && ls.pct >= 80 ? 6000 : 4500);
+  }
+
+  // ---------- undo the last entry ----------
+  let undoTxId = null, undoTimer = null;
+  function showUndo(msg, txId, ms){
+    undoTxId = txId;
+    document.getElementById('undoText').textContent = msg;
+    document.getElementById('undoBar').classList.add('show');
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(hideUndo, ms || 4500);
+  }
+  function hideUndo(){ document.getElementById('undoBar').classList.remove('show'); undoTxId = null; }
+  async function undoLast(){
+    const f = undoTxId ? findTx(undoTxId) : null;
+    hideUndo();
+    if(!f) return;
+    const cyc = DB.cycles[f.key];
+    cyc.transactions = cyc.transactions.filter(t=>t.id!==f.tx.id);
+    // put the amount back so a different category can be picked right away
+    expenseAmount = String(f.tx.amount);
+    renderAmountDisplay();
+    await saveData();
+    renderAll();
+    toast('تم التراجع — اختر الفئة الصحيحة');
+  }
+
+  // ---------- summary of the cycle that just closed ----------
+  function maybeShowSummary(){
+    const ps = DB.pendingSummary;
+    if(!ps) return;
+    const prev = DB.cycles[ps.prevKey], cur = DB.cycles[ps.newKey];
+    if(!prev || !cur){ delete DB.pendingSummary; saveData(); return; }
+    const pc = buildCycle(ps.prevKey);
+    const spent = cycleExpenseTotal(ps.prevKey);
+    const left = prev.budget - spent;
+    const variable = prev.transactions.filter(isVariableSpend).reduce((a,t)=>a+t.amount,0);
+    const exc = prev.transactions.filter(t=>t.type==='expense' && isExceptional(t.category)).reduce((a,t)=>a+t.amount,0);
+    const sl = DB.settings.spendLimit > 0 ? DB.settings.spendLimit : 0;
+    const over = getAllCategories().map(c=>({c, ls:limitStatus(c.id, ps.prevKey)})).filter(x=>x.ls && x.ls.spent > x.ls.limit);
+    const totals = {};
+    prev.transactions.filter(t=>t.type==='expense' && t.category!==COMMIT_CAT.id).forEach(t=>{ totals[t.category]=(totals[t.category]||0)+t.amount; });
+    const top = Object.keys(totals).sort((a,b)=>totals[b]-totals[a]).slice(0,3);
+    const deducted = cur.transactions.filter(t=>t.category===COMMIT_CAT.id && t.auto);
+    const saved = cur.transactions.filter(t=>t.type==='save' && t.auto);
+    const cell = (l,v,cls)=>`<div class="fin-cell"><div class="lbl">${l}</div><div class="num mono ${cls||''}">${v}</div></div>`;
+    document.getElementById('summaryTitle').textContent = 'ملخص الدورة: ' + fmtShort(pc.start) + (pc.end ? ' — ' + fmtShort(pc.end) : '');
+    document.getElementById('summaryBody').innerHTML =
+      `<div class="fin-grid">
+        ${cell('صرفت', fmtNum(Math.round(spent)) + ' ر.س')}
+        ${cell(left>=0 ? 'تبقّى ورُحّل' : 'عجز رُحّل', fmtNum(Math.round(Math.abs(left))) + ' ر.س', left>=0?'pos':'neg')}
+        ${cell(sl ? 'الصرف اليومي مقابل حدّك' : 'الصرف اليومي', fmtNum(Math.round(variable)) + (sl ? ' / ' + fmtNum(sl) : ''), sl ? (variable<=sl?'pos':'neg') : '')}
+        ${cell('استثنائي', fmtNum(Math.round(exc)) + ' ر.س')}
+      </div>`
+      + (top.length ? `<div class="sec-h">أكبر الفئات</div><ul class="sum-list">${top.map(id=>{ const c=findCategory(id)||{icon:'❔',label:'غير مصنف'}; return `<li>${c.icon} ${esc(c.label)}: <span class="mono">${fmtNum(Math.round(totals[id]))}</span></li>`; }).join('')}</ul>` : '')
+      + (over.length ? `<div class="sec-h" style="color:var(--expense)">تجاوزت حدها</div><ul class="sum-list">${over.map(({c,ls})=>`<li>${c.icon} ${esc(c.label)}: <span class="mono">${fmtNum(Math.round(ls.spent))} / ${fmtNum(ls.limit)}</span></li>`).join('')}</ul>` : '')
+      + (deducted.length || saved.length ? `<div class="sec-h">خُصم تلقائيًا من الدورة الجديدة</div><ul class="sum-list">${deducted.map(t=>{ const cm=(DB.commitments||[]).find(x=>x.id===t.commitmentId); return `<li>${cm?(cm.icon||'💳')+' '+esc(cm.name):'التزام'}: <span class="mono">${fmtNum(t.amount)}</span></li>`; }).join('')}${saved.map(t=>{ const j=findJar(t.jarId); return `<li>${j?(j.icon||'🫙')+' ادخار: '+esc(j.name):'ادخار'}: <span class="mono">${fmtNum(t.amount)}</span></li>`; }).join('')}</ul>` : '');
+    document.getElementById('summaryOverlay').classList.add('show');
+  }
+
+  // ---------- backup reminder (data lives only on this phone) ----------
+  const BACKUP_EVERY = 14*86400000;
+  function renderBackupBanner(){
+    const el = document.getElementById('backupBanner');
+    const ks = orderedKeys();
+    const hasData = ks.some(k=>DB.cycles[k].transactions.length);
+    const last = DB.settings.lastBackupTs || 0;
+    const since = last || (ks.length ? DB.cycles[ks[0]].startTs : Date.now());
+    const due = hasData && Date.now() - since > BACKUP_EVERY && (DB.settings.backupSnoozeTs||0) < Date.now();
+    el.classList.toggle('show', !!due);
+    if(due){
+      const days = Math.floor((Date.now() - since)/86400000);
+      document.getElementById('backupBannerText').textContent = last
+        ? '💾 آخر نسخة احتياطية قبل ' + days + ' يومًا'
+        : '💾 لم تنزّل أي نسخة احتياطية بعد — بياناتك على هذا الجوال فقط';
+    }
+  }
+
+  // ---------- hide amounts ----------
+  function applyPrivacy(){ document.documentElement.classList.toggle('privacy', !!DB.settings.privacy); }
+
+  // ---------- most-used categories first (computed once per session so buttons don't jump) ----------
+  let catOrder = null;
+  function computeCatOrder(){
+    const since = Date.now() - 60*86400000, counts = {};
+    Object.keys(DB.cycles).forEach(k=> DB.cycles[k].transactions.forEach(t=>{
+      if(t.type==='expense' && t.ts >= since) counts[t.category] = (counts[t.category]||0) + 1;
+    }));
+    const cats = getAllCategories();
+    catOrder = cats.map((c,i)=>({id:c.id, n:counts[c.id]||0, i})).sort((a,b)=>b.n-a.n || a.i-b.i).map(x=>x.id);
+  }
+  function orderedCategories(){
+    const cats = getAllCategories();
+    if(!catOrder) return cats;
+    const pos = id => { const i = catOrder.indexOf(id); return i < 0 ? 1e6 : i; };
+    return cats.slice().sort((a,b)=>pos(a.id)-pos(b.id));
   }
 
   // ---------- transaction details sheet ----------
@@ -2170,7 +2381,8 @@
     const tx = found.tx;
 
     let msg;
-    if(tx.type === 'topup' && tx.jarEntryId) msg = 'هذا تحويل من المدخرات. حذفه يخصم ' + fmtNum(tx.amount) + ' ر.س من الميزانية ويعيدها إلى الوعاء. متابعة؟';
+    if(tx.type === 'save') msg = 'حذف هذا الادخار؟ يُسحب ' + fmtNum(tx.amount) + ' ر.س من الوعاء ويعود إلى ميزانية الدورة.';
+    else if(tx.type === 'topup' && tx.jarEntryId) msg = 'هذا تحويل من المدخرات. حذفه يخصم ' + fmtNum(tx.amount) + ' ر.س من الميزانية ويعيدها إلى الوعاء. متابعة؟';
     else if(tx.type === 'topup') msg = 'هل تريد حذف عملية إضافة الرصيد؟ سيتم خصم ' + fmtNum(tx.amount) + ' ر.س من الميزانية.';
     else if(tx.category === COMMIT_CAT.id) msg = 'هذه دفعة التزام. حذفها من هنا يزيلها من مصاريف الشهر فقط. متابعة؟';
     else msg = 'هل تريد حذف هذه العملية من السجل؟';
@@ -2183,6 +2395,12 @@
         const e = jar && (jar.entries||[]).find(x=>x.id===tx.jarEntryId);
         if(e){ jar.balance = (jar.balance||0) - e.amount; jar.entries = jar.entries.filter(x=>x.id!==e.id); }
       }
+    }
+    if(tx.type === 'save'){
+      data.budget += tx.amount;
+      const jar = findJar(tx.jarId);
+      const e = jar && (jar.entries||[]).find(x=>x.id===tx.jarEntryId);
+      if(e){ jar.balance = (jar.balance||0) - e.amount; jar.entries = jar.entries.filter(x=>x.id!==e.id); }
     }
     if(tx.smsId){
       const s = DB.smsInbox.find(x=>x.id===tx.smsId);
@@ -2239,6 +2457,7 @@
   function beginSalaryCycle(salaryAmt, includeCarry, startTs){
     const now = new Date(startTs || Date.now());
     const leftover = includeCarry ? cycleLeftover(DB.currentCycleKey) : 0;
+    const prevKey = DB.currentCycleKey;
     const key = 'c-' + dateKey(now) + '-' + Math.random().toString(36).slice(2,7);
     DB.cycles[key] = {
       budget: salaryAmt + leftover,
@@ -2251,6 +2470,17 @@
     DB.currentCycleKey = key;
     viewCycleKey = null;
     deductMonthlyCommitments(key, now.getTime());
+    deductMonthlySavings(key, now.getTime());
+    if(prevKey && DB.cycles[prevKey] && DB.cycles[prevKey].transactions.length) DB.pendingSummary = { prevKey, newKey:key };
+  }
+
+  // each jar's monthly saving moves from the new cycle's budget into the jar (stops once the goal is reached)
+  function deductMonthlySavings(key, ts){
+    (DB.savings.jars||[]).forEach(j=>{
+      if(!(j.monthly > 0)) return;
+      const amt = j.goal > 0 ? Math.min(j.monthly, j.goal - (j.balance||0)) : j.monthly;
+      if(amt > 0) saveToJar(key, j, amt, ts, null, true);
+    });
   }
 
   // each commitment's monthly instalment is taken from the new cycle as soon as it starts
@@ -2349,6 +2579,7 @@
         renderCatGrid();
         closeBudgetOverlay(true);
         toast(budgetMode === 'newsalary' ? 'بدأ شهر جديد براتب جديد' : 'تم بدء ميزانية الشهر');
+        maybeShowSummary();
       };
     }
     const addBtn = document.getElementById('btnAddBudget');
@@ -2402,11 +2633,16 @@
     const allCats = getAllCategories();
     list.innerHTML = allCats.map(c=>{
       const bill = isBill(c.id);
+      const exc = isExceptional(c.id);
       return `<div class="cm-row">
         <span class="ic">${c.icon}</span>
-        <span class="lb">${c.label}</span>
-        <span class="cm-bill${catLimit(c.id)?' on':''}" data-limcat="${c.id}">${catLimit(c.id) ? 'حد ' + fmtNum(catLimit(c.id)) + (limitCarry(c.id, DB.currentCycleKey) > 0 ? ' +' + fmtNum(Math.round(limitCarry(c.id, DB.currentCycleKey))) + ' مرحّل' : '') : '+ حد'}</span>
-        <span class="cm-bill${bill?' on':''}" data-billcat="${c.id}" title="اعتبارها فاتورة شهرية ثابتة">${bill?'★ فاتورة':'☆ فاتورة'}</span>
+        <div class="lb">${esc(c.label)}
+          <div class="cm-chips">
+            <span class="cm-bill${catLimit(c.id)?' on':''}" data-limcat="${c.id}">${catLimit(c.id) ? 'حد ' + fmtNum(catLimit(c.id)) + (limitCarry(c.id, DB.currentCycleKey) > 0 ? ' +' + fmtNum(Math.round(limitCarry(c.id, DB.currentCycleKey))) + ' مرحّل' : '') : '+ حد'}</span>
+            <span class="cm-bill${bill?' on':''}" data-billcat="${c.id}" title="اعتبارها فاتورة شهرية ثابتة">${bill?'★ فاتورة':'☆ فاتورة'}</span>
+            <span class="cm-bill${exc?' on':''}" data-exccat="${c.id}" title="لا تدخل في معدل الصرف اليومي">${exc?'★ استثنائي':'☆ استثنائي'}</span>
+          </div>
+        </div>
         <span class="cm-del" data-delcat="${c.id}">✕</span>
       </div>`;
     }).join('');
@@ -2415,6 +2651,9 @@
     });
     list.querySelectorAll('[data-billcat]').forEach(btn=>{
       btn.addEventListener('click', ()=> toggleBill(btn.dataset.billcat));
+    });
+    list.querySelectorAll('[data-exccat]').forEach(btn=>{
+      btn.addEventListener('click', ()=> toggleExceptional(btn.dataset.exccat));
     });
     list.querySelectorAll('[data-limcat]').forEach(btn=>{
       btn.addEventListener('click', async ()=>{
@@ -2508,6 +2747,8 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(()=>URL.revokeObjectURL(url), 2000);
+      DB.settings.lastBackupTs = Date.now();
+      saveData(); renderBackupBanner();
       toast('تم تنزيل النسخة الاحتياطية');
     }catch(e){
       toast('تعذر إنشاء النسخة الاحتياطية');
@@ -2565,14 +2806,32 @@
   // ---------- init ----------
   async function init(){
     await loadData();
-    if(runAutoSalary()){ await saveData(); setTimeout(()=>toast('بدأت دورة جديدة: أُضيف الراتب وخُصمت الالتزامات'), 400); }
+    if(runAutoSalary()) await saveData();
     applyTheme();
+    applyPrivacy();
+    computeCatOrder();
     document.addEventListener('visibilitychange', async ()=>{
       if(document.visibilityState === 'visible' && runAutoSalary()){
-        await saveData(); renderAll(); renderCatGrid();
-        toast('بدأت دورة جديدة: أُضيف الراتب وخُصمت الالتزامات');
+        await saveData(); renderAll();
+        maybeShowSummary();
       }
     });
+    document.getElementById('undoBtn').addEventListener('click', undoLast);
+    document.getElementById('btnSummaryOk').addEventListener('click', async ()=>{
+      delete DB.pendingSummary; await saveData();
+      document.getElementById('summaryOverlay').classList.remove('show');
+    });
+    document.getElementById('btnBackupNow').addEventListener('click', ()=> exportBackup(false));
+    document.getElementById('btnBackupLater').addEventListener('click', async ()=>{
+      DB.settings.backupSnoozeTs = Date.now() + 3*86400000; await saveData(); renderBackupBanner();
+    });
+    document.getElementById('btnPrivacy').addEventListener('click', async ()=>{
+      DB.settings.privacy = !DB.settings.privacy; applyPrivacy(); await saveData();
+      toast(DB.settings.privacy ? 'تم إخفاء المبالغ' : 'تم إظهار المبالغ');
+    });
+    if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    }
 
     renderCatGrid();
     renderAmountDisplay();
@@ -2583,6 +2842,8 @@
     const cur = DB.currentCycleKey ? DB.cycles[DB.currentCycleKey] : null;
     if(!cur || !(cur.budget > 0)){
       openBudgetOverlay('start');
+    } else {
+      maybeShowSummary();
     }
 
     document.querySelectorAll('.navbtn').forEach(t=>{
@@ -2646,6 +2907,7 @@
     document.getElementById('rowIncome').addEventListener('click', ()=>{
       document.getElementById('settingsOverlay').classList.remove('show');
       document.getElementById('incomeInput').value = DB.settings.income || '';
+      document.getElementById('spendLimitInput').value = DB.settings.spendLimit || '';
       pdSel.value = DB.settings.payday ? String(DB.settings.payday) : '';
       document.getElementById('incomeOverlay').classList.add('show');
     });
@@ -2657,6 +2919,8 @@
       const wasOn = autoSalaryOn();
       DB.settings.income = inc > 0 ? inc : 0;
       DB.settings.payday = pd;
+      const sl = parseInput('spendLimitInput');
+      DB.settings.spendLimit = sl > 0 ? sl : 0;
       // only paydays from now on start cycles automatically
       if(autoSalaryOn() && (!wasOn || !DB.settings.autoFrom)) DB.settings.autoFrom = Date.now();
       runAutoSalary();
