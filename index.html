@@ -742,9 +742,6 @@
     <input type="text" inputmode="decimal" id="incomeInput" class="field" placeholder="0">
     <label class="fld-l">يوم نزول الراتب</label>
     <select id="paydaySelect" class="field"></select>
-    <label class="fld-l">حد الصرف الشهري للاستعمال (اختياري — أقل من الراتب)</label>
-    <input type="text" inputmode="decimal" id="spendLimitInput" class="field" placeholder="مثال: 6000">
-    <div class="help-note">يُحسب «المتاح يوميًا» من هذا الحد لا من الراتب كله. لا تدخل فيه الالتزامات والفواتير والمصروفات الاستثنائية.</div>
     <div class="budget-actions">
       <div class="btn primary" id="btnIncomeSave">حفظ</div>
     </div>
@@ -1336,17 +1333,12 @@
     const variable = data.transactions.filter(isVariableSpend).reduce((s,t)=>s+t.amount,0);
     const avgSpentPerDay = variable / daysPassed;
     const billsLeft = isCurrent ? expectedBillsLeft(c.key) : 0;
-    // with a monthly spending limit, "available" comes from that limit (never more than the real balance)
-    const spendLimit = DB.settings.spendLimit > 0 ? DB.settings.spendLimit : 0;
-    let pool = remaining - billsLeft;
-    if(spendLimit) pool = Math.min(spendLimit - variable, pool);
-    const avgAvailablePerDay = isCurrent ? pool / daysLeft : remaining;
-    if(spendLimit){
-      document.getElementById('remainingSub').textContent = 'من أصل ' + fmtNum(data.budget) + ' ر.س • حد الصرف: ' + fmtNum(Math.round(variable)) + ' من ' + fmtNum(spendLimit);
-    }
+    // available per day comes from the real balance: commitments, bills and exceptional spending
+    // all reduce it (they only stay out of the spending *rate* above)
+    const avgAvailablePerDay = isCurrent ? (remaining - billsLeft) / daysLeft : remaining;
     document.getElementById('rateSpentLabel').innerHTML = 'معدل الصرف اليومي<br>(بدون الالتزامات والفواتير والاستثنائي)';
     document.getElementById('safeDailyLabel').innerHTML = isCurrent
-      ? 'المتاح يوميًا<br>(' + daysLeft + ' يومًا حتى الراتب' + (spendLimit ? '، من حد الصرف' : (billsLeft>0 ? '، بعد حجز ~' + fmtNum(Math.round(billsLeft)) + ' للفواتير' : '')) + ')'
+      ? 'المتاح يوميًا<br>(' + daysLeft + ' يومًا حتى الراتب' + (billsLeft>0 ? '، بعد حجز ~' + fmtNum(Math.round(billsLeft)) + ' للفواتير' : '') + ')'
       : 'المتبقي في نهاية الدورة<br>&nbsp;';
 
     document.getElementById('avgSpentPerDay').textContent = fmtNum(avgSpentPerDay) + ' ر.س';
@@ -2223,7 +2215,6 @@
     const left = prev.budget - spent;
     const variable = prev.transactions.filter(isVariableSpend).reduce((a,t)=>a+t.amount,0);
     const exc = prev.transactions.filter(t=>t.type==='expense' && isExceptional(t.category)).reduce((a,t)=>a+t.amount,0);
-    const sl = DB.settings.spendLimit > 0 ? DB.settings.spendLimit : 0;
     const over = getAllCategories().map(c=>({c, ls:limitStatus(c.id, ps.prevKey)})).filter(x=>x.ls && x.ls.spent > x.ls.limit);
     const totals = {};
     prev.transactions.filter(t=>t.type==='expense' && t.category!==COMMIT_CAT.id).forEach(t=>{ totals[t.category]=(totals[t.category]||0)+t.amount; });
@@ -2236,7 +2227,7 @@
       `<div class="fin-grid">
         ${cell('صرفت', fmtNum(Math.round(spent)) + ' ر.س')}
         ${cell(left>=0 ? 'تبقّى ورُحّل' : 'عجز رُحّل', fmtNum(Math.round(Math.abs(left))) + ' ر.س', left>=0?'pos':'neg')}
-        ${cell(sl ? 'الصرف اليومي مقابل حدّك' : 'الصرف اليومي', fmtNum(Math.round(variable)) + (sl ? ' / ' + fmtNum(sl) : ''), sl ? (variable<=sl?'pos':'neg') : '')}
+        ${cell('الصرف اليومي المعتاد', fmtNum(Math.round(variable)) + ' ر.س')}
         ${cell('استثنائي', fmtNum(Math.round(exc)) + ' ر.س')}
       </div>`
       + (top.length ? `<div class="sec-h">أكبر الفئات</div><ul class="sum-list">${top.map(id=>{ const c=findCategory(id)||{icon:'❔',label:'غير مصنف'}; return `<li>${c.icon} ${esc(c.label)}: <span class="mono">${fmtNum(Math.round(totals[id]))}</span></li>`; }).join('')}</ul>` : '')
@@ -2907,7 +2898,6 @@
     document.getElementById('rowIncome').addEventListener('click', ()=>{
       document.getElementById('settingsOverlay').classList.remove('show');
       document.getElementById('incomeInput').value = DB.settings.income || '';
-      document.getElementById('spendLimitInput').value = DB.settings.spendLimit || '';
       pdSel.value = DB.settings.payday ? String(DB.settings.payday) : '';
       document.getElementById('incomeOverlay').classList.add('show');
     });
@@ -2919,8 +2909,7 @@
       const wasOn = autoSalaryOn();
       DB.settings.income = inc > 0 ? inc : 0;
       DB.settings.payday = pd;
-      const sl = parseInput('spendLimitInput');
-      DB.settings.spendLimit = sl > 0 ? sl : 0;
+      delete DB.settings.spendLimit;
       // only paydays from now on start cycles automatically
       if(autoSalaryOn() && (!wasOn || !DB.settings.autoFrom)) DB.settings.autoFrom = Date.now();
       runAutoSalary();
