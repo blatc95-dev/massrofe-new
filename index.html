@@ -1032,16 +1032,6 @@
     renderCatManageList();
     renderAll();
   }
-  // bills not yet paid this cycle, estimated from their average in past cycles
-  function expectedBillsLeft(key){
-    const past = orderedKeys().filter(k=>k!==key).slice(-3);
-    if(!past.length) return 0;
-    return (DB.billCategories||[]).reduce((sum,id)=>{
-      const avg = past.reduce((s,k)=>s+catSpendInCycle(k,id),0) / past.length;
-      return sum + Math.max(0, avg - catSpendInCycle(key,id));
-    }, 0);
-  }
-
   // ----- per-category monthly limits -----
   function catLimit(id){ const v = (DB.catLimits||{})[id]; return v > 0 ? v : 0; }
   // whatever is left of a category's allowance at the end of a cycle rolls over and
@@ -1332,13 +1322,12 @@
     const daysLeft = isCurrent ? Math.max(totalDays - daysPassed + 1, 1) : 1;
     const variable = data.transactions.filter(isVariableSpend).reduce((s,t)=>s+t.amount,0);
     const avgSpentPerDay = variable / daysPassed;
-    const billsLeft = isCurrent ? expectedBillsLeft(c.key) : 0;
-    // available per day comes from the real balance: commitments, bills and exceptional spending
-    // all reduce it (they only stay out of the spending *rate* above)
-    const avgAvailablePerDay = isCurrent ? (remaining - billsLeft) / daysLeft : remaining;
+    // available per day = what's actually left ÷ days until payday (commitments, bills and
+    // exceptional spending reduce it because they reduce the balance; nothing is reserved ahead)
+    const avgAvailablePerDay = isCurrent ? remaining / daysLeft : remaining;
     document.getElementById('rateSpentLabel').innerHTML = 'معدل الصرف اليومي<br>(بدون الالتزامات والفواتير والاستثنائي)';
     document.getElementById('safeDailyLabel').innerHTML = isCurrent
-      ? 'المتاح يوميًا<br>(' + daysLeft + ' يومًا حتى الراتب' + (billsLeft>0 ? '، بعد حجز ~' + fmtNum(Math.round(billsLeft)) + ' للفواتير' : '') + ')'
+      ? 'المتاح يوميًا<br>(' + daysLeft + ' يومًا حتى الراتب)'
       : 'المتبقي في نهاية الدورة<br>&nbsp;';
 
     document.getElementById('avgSpentPerDay').textContent = fmtNum(avgSpentPerDay) + ' ر.س';
